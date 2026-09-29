@@ -982,7 +982,7 @@ body{height:100vh;height:100dvh;align-items:center;}
   <!-- SETUP -->
   <div class="screen active" id="screen-setup">
     <div class="setup-hero">
-      <img class="game-logo" id="gameLogo" src="Resources/logo.png" alt="100-R">
+      <img class="game-logo" id="gameLogo" src="resources/logo.png" alt="100-R">
       <p class="tagline"><b>100-R</b><span>:</span> ¿Quién sabe más?</p>
     </div>
     <div class="setup-bottom">
@@ -1026,7 +1026,7 @@ body{height:100vh;height:100dvh;align-items:center;}
               <li><span class="rule-tile">5/10</span><span class="rule-text"><b>Elige tus categorías</b>Cada equipo recibe 10 categorías distintas a las del rival y se queda con 5.</span></li>
               <li><span class="rule-tile">10</span><span class="rule-text"><b>Turnos alternos</b>Con las 10 categorías elegidas entre los dos, os vais turnando: elegís una pregunta y respondéis.</span></li>
               <li><span class="rule-tile ic"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6M12 20V4M19 20v-10"/></svg></span><span class="rule-text"><b>Suma de puntos por ronda</b>En cada ronda se suman los puntos de las respuestas acertadas. El equipo con más puntos gana la ronda.</span></li>
-              <li><span class="rule-tile trophy"><img src="Resources/trofeo.png" alt="" onerror="this.replaceWith(document.createTextNode('🏆'))"></span><span class="rule-text"><b>Gana quien llegue a 5 rondas</b>El primer equipo que gane 5 rondas se lleva la partida y es el campeón.</span></li>
+              <li><span class="rule-tile trophy"><img src="resources/trofeo.png" alt="" onerror="this.replaceWith(document.createTextNode('🏆'))"></span><span class="rule-text"><b>Gana quien llegue a 5 rondas</b>El primer equipo que gane 5 rondas se lleva la partida y es el campeón.</span></li>
             </ul></div>
           </div>
           <div class="rs-page">
@@ -1428,14 +1428,14 @@ function teamAvatar(letter){ return (letter === 'A' ? state.avatarA : state.avat
 
 /* ====== AVATARES ======
    Cada pack es una "fila" del selector (como los avatares de Netflix).
-   Las imágenes van en Resources/avatares/ :
+   Las imágenes van en resources/avatares/ :
      - Clásicos:  1.png, 2.png, 3.png ...
      - Resto:     deportes1.png, deportes2.png ... / cine1.png ... / videojuegos1.png ... / musica1.png ... / animales1.png ...
                   animacion1.png ... / ciencia1.png ... / historia1.png ... / arte1.png ... / literatura1.png ... / otros1.png ...
    El selector comprueba qué imágenes existen (empieza en 1 y tolera huecos de hasta AVATAR_MAX_GAP seguidas) y solo muestra las disponibles.
    Mientras comprueba, por defecto se ven la 1 y la 2. Si un pack no tiene ninguna imagen, no aparece.
    Para añadir un pack nuevo: añade otro bloque a esta lista. */
-const RES_DIR = 'Resources/';
+const RES_DIR = 'resources/';
 const AVATAR_DIR = RES_DIR + 'avatares/';
 const AVATAR_DEFAULT_COUNT = 2;
 const AVATAR_PACKS = [
@@ -2180,3 +2180,4 @@ document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
+
