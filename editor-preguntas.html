@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor de preguntas</title>
+<style>
+:root{--bg:#160a28;--panel:#211039;--panel2:#2b1749;--line:rgba(255,255,255,.1);--txt:#f3eeff;--dim:rgba(243,238,255,.62);--pri:#8a2be2;--gold:#ffd54a;--ok:#43a047;--bad:#e5484d}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--txt);font:14px/1.45 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--gold)}button:disabled{opacity:.4;cursor:default}
+button.pri{background:var(--pri);border-color:var(--pri);font-weight:600}
+button.del{border-color:var(--bad);color:#ff9a9d}
+input,select,textarea{background:#150a27;border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+textarea{resize:vertical;min-height:64px}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:16px;margin:0 8px 0 0}#fileInfo{color:var(--dim);flex:1;min-width:120px}
+#dirty{color:var(--gold);font-weight:600;display:none}
+#welcome{margin:auto;text-align:center;color:var(--dim);max-width:420px;padding:20px}
+#welcome button{margin-top:12px;font-size:15px;padding:10px 18px}
+#app{flex:1;display:none;min-height:0}
+aside{width:290px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+aside .top{padding:10px;display:grid;gap:8px}
+#cats{overflow:auto;flex:1;padding:0 6px 10px}
+.cat{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:7px;cursor:pointer}
+.cat:hover{background:var(--panel2)}.cat.on{background:var(--pri)}
+.cat span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cat span:last-child{color:var(--dim)}.cat.on span:last-child{color:#fff}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.bar{padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
+.bar h2{margin:0 auto 0 0;font-size:18px}.bar .sm{width:auto}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 16px;border-bottom:1px solid var(--line)}
+.chip{border-radius:20px;padding:3px 11px;font-size:13px}.chip.on{background:var(--gold);color:#241800;border-color:var(--gold)}
+#list{flex:1;overflow:auto;padding:8px 16px}
+.row{display:grid;grid-template-columns:96px 44px 1fr auto;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer;background:var(--panel)}
+.row:hover{border-color:var(--gold)}.id{color:var(--dim)}
+.q{font-weight:600}.sub{color:var(--dim);font-size:13px;margin-top:3px}.sub b{color:var(--ok);font-weight:600}
+.tag{background:var(--panel2);border-radius:5px;padding:1px 7px;margin-right:6px}
+.diff{padding:2px 9px;border-radius:12px;font-size:12px;font-weight:700;color:#1b1030;display:inline-block}
+.VERY_EASY{background:#8ee19b}.EASY{background:#c5e58a}.MEDIUM{background:#ffd54a}.DIFFICULT{background:#ffa14a}.VERY_DIFFICULT{background:#ff6f6f}.IMPOSSIBLE{background:#d08bff}
+.right{text-align:right;white-space:nowrap}.right div{color:var(--dim);font-size:12px;margin-top:3px}
+.pager{display:flex;gap:8px;align-items:center;justify-content:center;padding:8px;border-top:1px solid var(--line);color:var(--dim)}
+#modal{position:fixed;inset:0;background:rgba(5,2,12,.75);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px;z-index:5}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;max-width:680px;padding:18px;display:grid;gap:12px}
+.card h3{margin:0}.card label{display:grid;gap:4px;color:var(--dim);font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr 90px;gap:10px}
+.opt{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}.opt input[type=radio]{width:auto;accent-color:var(--ok)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}.acts .sp{flex:1}
+#err{color:#ff9a9d;min-height:18px}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--gold);color:#241800;padding:9px 16px;border-radius:9px;font-weight:600;display:none;z-index:9}
+/* Vista previa de la imagen: mismas proporciones y recorte que en el juego */
+.qimg{position:relative;width:100%;max-width:420px;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:#150a28;border:1px dashed var(--line)}
+.qimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;display:none}
+.qimg.has{border:none}.qimg.has img{display:block}
+.qimg img.img-transp,.thumb img.img-transp{object-fit:contain;object-position:50% 50%;background:#fff}
+.qimg-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;color:var(--dim);font-size:13px}
+.qimg.has .qimg-msg{display:none}
+#imgCap{color:var(--dim);font-size:12px;margin-top:6px;min-height:16px}
+/* Miniaturas clicables (preguntas y categoría) */
+.thumb{position:relative;width:96px;aspect-ratio:16/10;border-radius:8px;overflow:hidden;background:#150a28;border:1px dashed var(--line);cursor:pointer;flex:none}
+.thumb.big{width:120px}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;display:none}
+.thumb.has{border:1px solid var(--line)}.thumb.has img{display:block}
+.thumb .tmsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px;color:var(--dim);font-size:11px;line-height:1.2}
+.thumb.has .tmsg{display:none}
+.thumb:hover,.thumb:focus-visible{border-color:var(--gold);border-style:solid}
+.thumb.custom::after{content:'✎';position:absolute;right:3px;bottom:3px;background:var(--gold);color:#241800;font-size:10px;border-radius:5px;padding:0 5px;line-height:15px}
+.cathead{display:flex;align-items:center;gap:12px;margin-right:auto}.cathead h2{margin:0}
+.cathead small{display:block;color:var(--dim);font-size:12px;margin-top:2px}
+#imgPop{position:fixed;inset:0;background:rgba(5,2,12,.75);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px;z-index:7}
+#imgPop .card{max-width:480px}
+#ipCap{color:var(--dim);font-size:12px;margin-top:6px;min-height:16px}
+@media(max-width:800px){#app{flex-direction:column}aside{width:100%;height:36vh}.two{grid-template-columns:1fr}.row{grid-template-columns:80px 1fr}.row .right{grid-column:2;text-align:left}.thumb{width:80px}}
+</style></head><body>
+<header>
+  <h1>🛠 Editor de preguntas</h1><span id="fileInfo">Ningún archivo abierto</span><span id="dirty">● Cambios sin guardar</span>
+  <button id="bOpen">Abrir preguntas.js</button>
+  <button id="bSave" class="pri" disabled>Guardar</button>
+  <button id="bCopy" disabled>Descargar copia</button>
+  <input type="file" id="file" accept=".js,.json,.txt" hidden>
+</header>
+<div id="welcome"><p><b>Abre tu archivo <code>preguntas.js</code></b> para verlo, filtrarlo y editarlo. También sirve un .json con la lista de preguntas.</p><button id="bOpen2" class="pri">Abrir preguntas.js</button></div>
+<div id="app">
+  <aside><div class="top"><input id="catQ" placeholder="Buscar categoría…"><button id="bNewCat">＋ Nueva categoría</button></div><div id="cats"></div></aside>
+  <main>
+    <div class="bar"><div class="cathead"><span id="catSlot"></span><div><h2 id="title"></h2><small id="catHint"></small></div></div>
+      <button id="bRen">Renombrar</button><button id="bDelCat" class="del">Eliminar categoría</button>
+      <button id="bNew" class="pri">＋ Nueva pregunta</button></div>
+    <div class="bar"><input id="q" placeholder="Buscar en pregunta, respuestas, explicación o #id…" style="flex:1;min-width:200px">
+      <select id="sort" class="sm"><option value="id">Orden: ID</option><option value="text">Pregunta (A-Z)</option><option value="cat">Categoría (A-Z)</option><option value="diff">Dificultad</option><option value="pts">Puntos</option></select>
+      <button id="dir" title="Cambiar sentido">↑ Asc</button>
+      <select id="size" class="sm"><option>25</option><option selected>50</option><option>100</option></select></div>
+    <div class="chips" id="chips"></div>
+    <div id="list"></div>
+    <div class="pager"><button id="pPrev">‹</button><span id="pInfo"></span><button id="pNext">›</button></div>
+  </main>
+</div>
+<div id="modal"><div class="card">
+  <h3 id="mTitle"></h3>
+  <div class="two">
+    <label>Categoría<input id="fCat" list="catList"></label>
+    <label>Dificultad<select id="fDiff"></select></label>
+    <label>Puntos<input id="fPts" type="number" min="1" max="10"></label>
+  </div>
+  <datalist id="catList"></datalist>
+  <label>Pregunta<textarea id="fText"></textarea></label>
+  <div><div style="color:var(--dim);font-size:13px;margin-bottom:5px">Respuestas (marca la correcta)</div><div id="opts" style="display:grid;gap:6px"></div>
+    <button id="bAddOpt" style="margin-top:6px">＋ Añadir respuesta</button></div>
+  <label>Explicación (se muestra tras responder)<textarea id="fInfo"></textarea></label>
+  <label>Imagen (opcional: ruta o URL; si se deja vacío el juego busca una en Wikipedia)<input id="fImg"></label>
+  <div><div class="qimg" id="qimgBox"><img id="qimg" alt=""><div class="qimg-msg" id="qimgMsg"></div></div><div id="imgCap"></div></div>
+  <div id="err"></div>
+  <div class="acts"><button id="mSave" class="pri">Aceptar</button><button id="mCancel">Cancelar</button><span class="sp"></span>
+    <button id="mDup">Duplicar</button><button id="mDel" class="del">Eliminar</button></div>
+</div></div>
+<div id="imgPop"><div class="card">
+  <h3 id="ipTitle"></h3>
+  <div><div class="qimg" id="ipBox"><img id="ipImg" alt=""><div class="qimg-msg" id="ipMsg"></div></div><div id="ipCap"></div></div>
+  <label><span id="ipLabel">Enlace de la imagen (ruta o URL)</span><input id="ipUrl" placeholder="https://…"></label>
+  <div class="acts"><button id="ipOk" class="pri">Aceptar</button><button id="ipCancel">Cancelar</button><span class="sp"></span><button id="ipClear" class="del"></button></div>
+</div></div>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+const DIFF={VERY_EASY:['Muy fácil',1],EASY:['Fácil',2],MEDIUM:['Medio',3],DIFFICULT:['Difícil',4],VERY_DIFFICULT:['Muy difícil',5],IMPOSSIBLE:['Imposible',6]};
+const DIFFS=Object.keys(DIFF), COL=new Intl.Collator('es',{sensitivity:'base',numeric:true});
+const HEADER='/* PREGUNTAS DEL JUEGO (generado con el editor de preguntas) */\n\n';
+const KEYS=['id','text','options','correctAnswerIndex','category','difficulty','points','info'];
+let CAT_IMG={},Q=[],header=HEADER,handle=null,fname='preguntas.js',dirty=false;
+let F={cat:null,diffs:new Set(),q:'',sort:'id',dir:1,page:0},idx=new Map(),ed=null,fo=[],fc=-1;
+const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3200)}
+function setDirty(v){dirty=v;$('dirty').style.display=v?'inline':'none'}
+window.onbeforeunload=e=>{if(dirty){e.preventDefault();e.returnValue=''}};
+
+/* ---------- carga y guardado ---------- */
+function parseText(text){
+  const m=text.search(/(const|let|var)\s+QUESTIONS\s*=/);
+  const ci=text.search(/(const|let|var)\s+CATEGORY_IMAGES\s*=/);let cats={};
+  if(ci>m&&m>=0){const ct=text.slice(ci),a=ct.indexOf('{'),b=ct.lastIndexOf('}');
+    if(a>=0&&b>a){const body=ct.slice(a,b+1);try{cats=JSON.parse(body)}catch(e){try{cats=new Function('"use strict";return ('+body+')')()}catch(e2){cats={}}}}
+    text=text.slice(0,ci)}
+  const head=m>=0?text.slice(0,m):HEADER, from=text.indexOf('[',m>=0?m:0), to=text.lastIndexOf(']');
+  if(from<0||to<from)throw new Error('No se encuentra la lista de preguntas.');
+  const body=text.slice(from,to+1); let arr;
+  try{arr=JSON.parse(body)}catch(e){arr=new Function('"use strict";return ('+body+')')()}
+  if(!Array.isArray(arr))throw new Error('El contenido no es una lista.');
+  return {head,arr,cats};
+}
+function loadText(text,name,h){
+  let r;try{r=parseText(text)}catch(e){toast('No se pudo leer el archivo: '+e.message);return}
+  CAT_IMG={};Object.entries(r.cats||{}).forEach(([k,v])=>{if(typeof v==='string'&&v.trim())CAT_IMG[k]=v.trim()});
+  Q=r.arr;header=r.head;handle=h||null;fname=name||'preguntas.js';
+  Q.forEach(q=>{q.options=Array.isArray(q.options)?q.options:[];q.category=String(q.category||'').trim();q.info=q.info||''});
+  idx=new Map();Q.forEach(indexQ);
+  F={cat:null,diffs:new Set(),q:'',sort:'id',dir:1,page:0};$('q').value='';$('sort').value='id';$('dir').textContent='↑ Asc';
+  $('welcome').style.display='none';$('app').style.display='flex';
+  $('bSave').disabled=$('bCopy').disabled=false;
+  $('fileInfo').textContent=fname+' · '+Q.length+' preguntas'+(h?'':' (se guardará como descarga)');
+  setDirty(false);render();
+}
+function indexQ(q){idx.set(q.id,norm([q.text,q.options.join(' '),q.info,q.category].join(' ')))}
+function output(){
+  let o=header+'const QUESTIONS = '+JSON.stringify(Q,null,2)+';\n';
+  const cs=new Set(Q.map(q=>q.category)),ci={};
+  Object.keys(CAT_IMG).sort(COL.compare).forEach(k=>{if(cs.has(k)&&CAT_IMG[k])ci[k]=CAT_IMG[k]});
+  if(Object.keys(ci).length)o+='\n/* Imagen por defecto de cada categoría (si una categoría no aparece aquí, se busca en Wikipedia) */\nconst CATEGORY_IMAGES = '+JSON.stringify(ci,null,2)+';\n';
+  return o}
+function download(name,text){const a=el('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/javascript'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+async function save(){
+  if(!Q.length&&!handle)return;
+  if(handle){try{
+    if(handle.queryPermission){let p=await handle.queryPermission({mode:'readwrite'});if(p!=='granted')p=await handle.requestPermission({mode:'readwrite'});if(p!=='granted')throw 0}
+    const w=await handle.createWritable();await w.write(output());await w.close();setDirty(false);toast('Guardado en '+fname+' ✔');return
+  }catch(e){toast('No se pudo escribir en el archivo; se descarga una copia.')}}
+  download(fname.endsWith('.js')?fname:'preguntas.js',output());setDirty(false);
+}
+async function openFile(){
+  if(window.showOpenFilePicker){try{
+    const [h]=await showOpenFilePicker({types:[{description:'Preguntas',accept:{'text/javascript':['.js'],'application/json':['.json']}}]});
+    const f=await h.getFile();loadText(await f.text(),f.name,h);return
+  }catch(e){if(e&&e.name==='AbortError')return}}
+  $('file').click();
+}
+$('file').onchange=async e=>{const f=e.target.files[0];if(f)loadText(await f.text(),f.name,null);e.target.value=''};
+$('bOpen').onclick=$('bOpen2').onclick=openFile;$('bSave').onclick=save;$('bCopy').onclick=()=>download(fname.endsWith('.js')?fname:'preguntas.js',output());
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();if(Q.length)save()}if(e.key==='Escape'){if(pop)closePop();else closeModal()}});
+
+/* ---------- listado ---------- */
+function counts(){const m=new Map();Q.forEach(q=>m.set(q.category,(m.get(q.category)||0)+1));return m}
+function renderCats(){
+  const box=$('cats'),st=box.scrollTop,f=norm($('catQ').value),m=counts();
+  const names=[...m.keys()].filter(n=>!f||norm(n).includes(f)).sort(COL.compare);
+  box.innerHTML='';const fr=document.createDocumentFragment();
+  const add=(n,label,c)=>{const d=el('div','cat'+(F.cat===n?' on':''));d.append(el('span','',label),el('span','',c));d.onclick=()=>{F.cat=n;F.page=0;render()};fr.append(d)};
+  add(null,'📚 Todas',Q.length);names.forEach(n=>add(n,n||'(sin categoría)',m.get(n)));
+  box.append(fr);box.scrollTop=st;
+  const dl=$('catList');dl.innerHTML='';[...m.keys()].sort(COL.compare).forEach(n=>{const o=el('option');o.value=n;dl.append(o)});
+}
+function matches(q,skipDiff){
+  if(F.cat!==null&&q.category!==F.cat)return false;
+  if(!skipDiff&&F.diffs.size&&!F.diffs.has(q.difficulty))return false;
+  const s=norm(F.q).trim();if(!s)return true;
+  return /^#?\d+$/.test(s)&&q.id===+s.replace('#','')||idx.get(q.id).includes(s);
+}
+function render(){renderCats();renderList()}
+function renderList(){
+  if(F.cat!==null&&!Q.some(q=>q.category===F.cat))F.cat=null;
+  $('title').textContent=F.cat===null?'Todas las preguntas':F.cat||'(sin categoría)';
+  $('bRen').style.display=$('bDelCat').style.display=F.cat===null?'none':'';
+  const base=Q.filter(q=>matches(q,true)),dc={};base.forEach(q=>dc[q.difficulty]=(dc[q.difficulty]||0)+1);
+  const ch=$('chips');ch.innerHTML='';
+  DIFFS.forEach(d=>{const b=el('button','chip'+(F.diffs.has(d)?' on':''),DIFF[d][0]+' ('+(dc[d]||0)+')');
+    b.onclick=()=>{F.diffs.has(d)?F.diffs.delete(d):F.diffs.add(d);F.page=0;renderList()};ch.append(b)});
+  const list=base.filter(q=>!F.diffs.size||F.diffs.has(q.difficulty));
+  const cmp={id:(a,b)=>a.id-b.id,text:(a,b)=>COL.compare(a.text,b.text),cat:(a,b)=>COL.compare(a.category,b.category),
+    diff:(a,b)=>DIFFS.indexOf(a.difficulty)-DIFFS.indexOf(b.difficulty),pts:(a,b)=>a.points-b.points}[F.sort];
+  list.sort((a,b)=>F.dir*cmp(a,b)||a.id-b.id);
+  const size=+$('size').value,pages=Math.max(1,Math.ceil(list.length/size));F.page=Math.min(F.page,pages-1);
+  const box=$('list');box.innerHTML='';box.scrollTop=0;
+  if(thumbIO)thumbIO.disconnect();
+  thumbIO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){thumbIO.unobserve(e.target);e.target._go()}}),{root:box,rootMargin:'300px'}):null;
+  const showC=F.cat!==null&&F.cat!=='';
+  catThumb.style.display=$('catHint').style.display=showC?'':'none';
+  if(showC){catThumb.classList.toggle('custom',!!CAT_IMG[F.cat]);
+    if(catThumb._cat!==F.cat){catThumb._cat=F.cat;loadThumb(catThumb,()=>getCategoryImage(F.cat))}}
+  list.slice(F.page*size,F.page*size+size).forEach(q=>{
+    const r=el('div','row'),mid=el('div'),right=el('div','right'),sub=el('div','sub');
+    const ans=q.options[q.correctAnswerIndex];
+    sub.append(el('span','tag',q.category||'(sin categoría)'));
+    if(ans!==undefined){sub.append('✔ ');const b=el('b','',ans);sub.append(b)}else sub.append('⚠ sin respuesta correcta');
+    mid.append(el('div','q',q.text),sub);
+    right.append(el('span','diff '+q.difficulty,(DIFF[q.difficulty]||[q.difficulty])[0]),el('div','',q.points+' pto'+(q.points==1?'':'s')));
+    const th=mkThumb();th.classList.toggle('custom',!!q.image);th.title='Clic para cambiar la imagen de esta pregunta';
+    th._go=()=>loadThumb(th,()=>qImg(q));
+    th.onclick=ev=>{ev.stopPropagation();editQImage(q,th)};
+    r.append(th,el('div','id','#'+q.id),mid,right);r.onclick=()=>openEditor(q);box.append(r);
+    if(thumbIO)thumbIO.observe(th);else th._go()});
+  if(!list.length)box.append(el('p','sub','No hay preguntas con estos filtros.'));
+  $('pInfo').textContent=list.length?(F.page*size+1)+'–'+Math.min(list.length,F.page*size+size)+' de '+list.length+' · página '+(F.page+1)+'/'+pages:'0 resultados';
+  $('pPrev').disabled=F.page<=0;$('pNext').disabled=F.page>=pages-1;
+}
+$('catQ').oninput=renderCats;
+$('q').oninput=e=>{F.q=e.target.value;F.page=0;renderList()};
+$('sort').onchange=e=>{F.sort=e.target.value;F.page=0;renderList()};
+$('dir').onclick=()=>{F.dir*=-1;$('dir').textContent=F.dir>0?'↑ Asc':'↓ Desc';renderList()};
+$('size').onchange=()=>{F.page=0;renderList()};
+$('pPrev').onclick=()=>{F.page--;renderList()};$('pNext').onclick=()=>{F.page++;renderList()};
+
+/* ---------- categorías ---------- */
+$('bNewCat').onclick=()=>{const n=(prompt('Nombre de la nueva categoría:')||'').trim();if(!n)return;
+  if(counts().has(n)){F.cat=n;render();toast('Esa categoría ya existe.');return}
+  openEditor(null,{category:n});toast('La categoría se creará al guardar su primera pregunta.')};
+$('bRen').onclick=()=>{const old=F.cat,n=(prompt('Nuevo nombre para «'+old+'»:',old)||'').trim();if(!n||n===old)return;
+  if(counts().has(n)&&!confirm('Ya existe «'+n+'». ¿Fusionar las preguntas en esa categoría?'))return;
+  Q.forEach(q=>{if(q.category===old){q.category=n;indexQ(q)}});if(CAT_IMG[old]){if(!CAT_IMG[n])CAT_IMG[n]=CAT_IMG[old];delete CAT_IMG[old]}F.cat=n;setDirty(true);render();toast('Categoría renombrada.')};
+$('bDelCat').onclick=()=>{const c=Q.filter(q=>q.category===F.cat).length;
+  if(!confirm('¿Eliminar la categoría «'+F.cat+'» y sus '+c+' preguntas? No se puede deshacer (salvo no guardando).'))return;
+  Q=Q.filter(q=>q.category!==F.cat);delete CAT_IMG[F.cat];F.cat=null;setDirty(true);render();toast('Categoría eliminada.')};
+
+/* ---------- editor de pregunta ---------- */
+$('fDiff').innerHTML=DIFFS.map(d=>'<option value="'+d+'">'+DIFF[d][0]+'</option>').join('');
+$('fDiff').onchange=()=>$('fPts').value=DIFF[$('fDiff').value][1];
+function renderOpts(){
+  const b=$('opts');b.innerHTML='';
+  fo.forEach((t,i)=>{const r=el('div','opt'),rd=el('input');rd.type='radio';rd.name='ok';rd.checked=i===fc;rd.title='Es la correcta';rd.onchange=()=>fc=i;
+    const tx=el('input');tx.value=t;tx.placeholder='Respuesta '+(i+1);tx.oninput=()=>fo[i]=tx.value;
+    const x=el('button','del','✕');x.title='Quitar';x.onclick=()=>{if(fo.length<=2)return;fo.splice(i,1);if(i<fc)fc--;else if(i===fc)fc=-1;renderOpts()};
+    r.append(rd,tx,x);b.append(r)});
+}
+$('bAddOpt').onclick=()=>{if(fo.length<10){fo.push('');renderOpts()}};
+/* ---------- vista previa de la imagen (igual que en el juego) ---------- */
+const WIKI_TITULOS={};
+const IMG_CACHE_KEY='duelo_img_cache_v3';
+let imgCache={};try{imgCache=JSON.parse(localStorage.getItem(IMG_CACHE_KEY))||{}}catch(e){}
+const imgPending={};
+function saveImgCache(){try{localStorage.setItem(IMG_CACHE_KEY,JSON.stringify(imgCache))}catch(e){}}
+async function wikiQuery(params){
+  const url='https://es.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=thumbnail&pithumbsize=600&'+params;
+  const res=await fetch(url);if(!res.ok)throw new Error('HTTP '+res.status);
+  const data=await res.json();
+  return (data.query&&data.query.pages)?Object.values(data.query.pages):[];
+}
+async function fetchWikiImage(category){
+  const title=WIKI_TITULOS[category]||category;
+  let pages=await wikiQuery('redirects=1&titles='+encodeURIComponent(title));
+  let hit=pages.find(p=>p.thumbnail);
+  if(!hit){
+    pages=await wikiQuery('generator=search&gsrlimit=5&gsrsearch='+encodeURIComponent(title));
+    pages.sort((a,b)=>(a.index||0)-(b.index||0));
+    hit=pages.find(p=>p.thumbnail);
+  }
+  return hit?hit.thumbnail.source:null;
+}
+function getCategoryImage(category){
+  if(CAT_IMG[category])return Promise.resolve(CAT_IMG[category]);
+  return getWikiImage(category);
+}
+function getWikiImage(category){
+  if(category in imgCache)return Promise.resolve(imgCache[category]);
+  if(imgPending[category])return imgPending[category];
+  imgPending[category]=fetchWikiImage(category)
+    .then(url=>{imgCache[category]=url;saveImgCache();return url})
+    .catch(()=>null)
+    .finally(()=>{delete imgPending[category]});
+  return imgPending[category];
+}
+/* ====== IMÁGENES CON TRANSPARENCIA ======
+   Si la imagen tiene zonas transparentes, se muestra entera (sin recortar) sobre fondo blanco.
+   Si no las tiene, se sigue ajustando como siempre (rellenando el cuadro).
+   Para saberlo se leen los píxeles; si el navegador no lo permite (imagen de otra web sin permiso o
+   archivo local), se decide por el formato: PNG, WebP, GIF, SVG y AVIF pueden ser transparentes; JPG nunca. */
+const transpCache = {};
+function imgLooksTransparent(src){
+  src = String(src);
+  if (src in transpCache) return Promise.resolve(transpCache[src]);
+  const path = src.split(/[?#]/)[0];
+  if (/\.(jpe?g|jfif|bmp)$/i.test(path) || /^data:image\/jpe?g/i.test(src)){ transpCache[src] = false; return Promise.resolve(false); }
+  const maybe = /\.(png|webp|gif|svg|avif)$/i.test(path) || /^data:image\/(png|webp|gif|svg|avif)/i.test(src);
+  return new Promise(res => {
+    const done = v => { transpCache[src] = v; res(v); };
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => {
+      try {
+        const k = Math.min(1, 96 / Math.max(im.naturalWidth, im.naturalHeight, 1));
+        const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d'); ctx.drawImage(im, 0, 0, w, h);
+        const d = ctx.getImageData(0, 0, w, h).data;
+        let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] < 200) n++;
+        done(n / (w * h) >= 0.01);
+      } catch(e){ done(maybe); }
+    };
+    im.onerror = () => done(maybe);
+    im.src = src;
+  });
+}
+function fitImage(img, src){
+  img.classList.remove('img-transp');
+  img._fit = src;
+  imgLooksTransparent(src).then(t => { if (img._fit === src) img.classList.toggle('img-transp', t); });
+}
+
+/* ---------- miniaturas y ventana rápida para cambiar imágenes ---------- */
+let thumbIO=null,pop=null,popTok=0,popTimer=null;
+const qImg=q=>q.image?Promise.resolve(q.image):(q.category?getCategoryImage(q.category):Promise.resolve(null));
+function mkThumb(cls){const b=el('div','thumb'+(cls?' '+cls:'')),i=el('img'),m=el('span','tmsg','');i.alt='';b.append(i,m);b.tabIndex=0;b.setAttribute('role','button');
+  b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();b.click()}};return b}
+function loadThumb(b,srcFn){
+  const tok=b._t=(b._t||0)+1,img=b.firstChild,msg=b.lastChild;
+  b.classList.remove('has');img.removeAttribute('src');msg.textContent='…';
+  Promise.resolve(srcFn()).then(src=>{if(b._t!==tok)return;
+    if(!src){msg.textContent='Sin imagen (clic para añadir)';return}
+    img.onload=()=>{if(b._t===tok)b.classList.add('has')};
+    img.onerror=()=>{if(b._t===tok){b.classList.remove('has');msg.textContent='⚠ No carga (clic para cambiar)'}};
+    fitImage(img,src);img.src=src}).catch(()=>{if(b._t===tok)msg.textContent='Sin imagen'});
+}
+function refreshThumbs(){document.querySelectorAll('#list .thumb').forEach(t=>{if(t._go)t._go()})}
+const catThumb=mkThumb('big');catThumb.id='catThumb';$('catSlot').append(catThumb);
+$('catHint').textContent='Imagen por defecto de la categoría · clic en la imagen para cambiarla';
+catThumb.title='Clic para cambiar la imagen por defecto de esta categoría';
+catThumb.onclick=()=>editCatImage(F.cat);
+function editQImage(q,th){
+  openImgPop({title:'Imagen de la pregunta #'+q.id,value:q.image||'',
+    label:'Enlace de la imagen (ruta o URL)',clearLabel:'Quitar enlace (usar la de la categoría)',
+    autoCap:'Sin enlace propio: se usa la imagen por defecto de «'+(q.category||'…')+'».',
+    auto:()=>q.category?getCategoryImage(q.category):null,
+    onSave:url=>{if(url)q.image=url;else delete q.image;setDirty(true);th.classList.toggle('custom',!!url);th._go();toast(url?'Imagen de la pregunta actualizada.':'Se usará la imagen de la categoría.')}});
+}
+function editCatImage(cat){
+  if(!cat)return;
+  openImgPop({title:'Imagen por defecto de «'+cat+'»',value:CAT_IMG[cat]||'',
+    label:'Enlace de la imagen por defecto (ruta o URL)',clearLabel:'Quitar enlace (usar la automática de Wikipedia)',
+    autoCap:'Sin enlace: imagen automática de Wikipedia para «'+cat+'».',
+    auto:()=>getWikiImage(cat),
+    onSave:url=>{if(url)CAT_IMG[cat]=url;else delete CAT_IMG[cat];setDirty(true);catThumb.classList.toggle('custom',!!url);
+      loadThumb(catThumb,()=>getCategoryImage(cat));refreshThumbs();toast(url?'Imagen por defecto de la categoría actualizada.':'La categoría vuelve a usar la imagen automática.')}});
+}
+function openImgPop(o){
+  pop=o;$('ipTitle').textContent=o.title;$('ipLabel').textContent=o.label;$('ipClear').textContent=o.clearLabel;
+  $('ipUrl').value=o.value||'';$('ipClear').style.display=o.value?'':'none';
+  $('imgPop').style.display='flex';$('imgPop').scrollTop=0;ipPreview();$('ipUrl').focus();$('ipUrl').select();
+}
+function closePop(){$('imgPop').style.display='none';pop=null;popTok++;clearTimeout(popTimer)}
+async function ipPreview(){
+  if(!pop)return;
+  const tok=++popTok,box=$('ipBox'),img=$('ipImg'),msg=$('ipMsg'),cap=$('ipCap'),url=$('ipUrl').value.trim();
+  box.classList.remove('has');img.removeAttribute('src');let src;
+  if(url){src=url;msg.textContent='Cargando imagen…';cap.textContent='Imagen indicada en el enlace.'}
+  else{msg.textContent='Buscando imagen…';cap.textContent=pop.autoCap;
+    try{src=await pop.auto()}catch(e){src=null}if(tok!==popTok)return}
+  if(!src){msg.textContent='Sin imagen: el juego no mostraría ninguna.';return}
+  img.onload=()=>{if(tok===popTok)box.classList.add('has')};
+  img.onerror=()=>{if(tok===popTok){box.classList.remove('has');msg.textContent='No se puede cargar esta imagen: el juego no la mostraría.'}};
+  fitImage(img,src);img.src=src;
+}
+$('ipUrl').addEventListener('input',()=>{clearTimeout(popTimer);popTimer=setTimeout(ipPreview,500)});
+$('ipUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('ipOk').click()}});
+$('ipOk').onclick=()=>{if(!pop)return;const o=pop,u=$('ipUrl').value.trim();closePop();o.onSave(u)};
+$('ipClear').onclick=()=>{if(!pop)return;const o=pop;closePop();o.onSave('')};
+$('ipCancel').onclick=closePop;
+$('imgPop').addEventListener('mousedown',e=>{if(e.target===$('imgPop'))closePop()});
+let prevTok=0,prevTimer=null;
+async function updateImgPreview(){
+  const tok=++prevTok,box=$('qimgBox'),img=$('qimg'),msg=$('qimgMsg'),cap=$('imgCap');
+  const url=$('fImg').value.trim(),cat=$('fCat').value.trim();
+  box.classList.remove('has');img.removeAttribute('src');
+  let src=null,auto=false;
+  if(url){src=url;msg.textContent='Cargando imagen…';cap.textContent='Imagen indicada en el enlace.'}
+  else if(cat){auto=true;msg.textContent='Buscando imagen en Wikipedia…';cap.textContent=CAT_IMG[cat]?'Imagen por defecto de «'+cat+'» (enlace personalizado de la categoría).':'Imagen automática para «'+cat+'», la misma que buscaría el juego.';
+    src=await getCategoryImage(cat);if(tok!==prevTok)return}
+  else{msg.textContent='Escribe una categoría o un enlace para ver la imagen.';cap.textContent='';return}
+  if(!src){msg.textContent='Sin imagen: el juego no mostraría ninguna.';cap.textContent=auto?'No se encontró imagen automática (o no hay conexión).':'';return}
+  img.onload=()=>{if(tok===prevTok)box.classList.add('has')};
+  img.onerror=()=>{if(tok===prevTok){box.classList.remove('has');msg.textContent='No se puede cargar esta imagen: el juego no la mostraría.'}};
+  fitImage(img,src);img.src=src;
+}
+function schedulePreview(){clearTimeout(prevTimer);prevTimer=setTimeout(updateImgPreview,500)}
+$('fImg').addEventListener('input',schedulePreview);
+$('fCat').addEventListener('input',schedulePreview);
+function openEditor(q,pre){
+  ed=q&&!pre?q:null;const s=q||pre||{};
+  $('mTitle').textContent=ed?'Editar pregunta #'+ed.id:(q&&pre?'Duplicar pregunta':'Nueva pregunta');
+  $('fCat').value=s.category??(F.cat||'');$('fDiff').value=s.difficulty||'VERY_EASY';$('fPts').value=s.points||DIFF[$('fDiff').value][1];
+  $('fText').value=s.text||'';$('fInfo').value=s.info||'';$('fImg').value=s.image||'';
+  fo=s.options?s.options.slice():['','','',''];fc=s.options?s.correctAnswerIndex:-1;renderOpts();
+  $('mDup').style.display=$('mDel').style.display=ed?'':'none';$('err').textContent='';
+  updateImgPreview();
+  $('modal').style.display='flex';$('modal').scrollTop=0;$('fText').focus();
+}
+function closeModal(){$('modal').style.display='none';ed=null;prevTok++;clearTimeout(prevTimer)}
+$('bNew').onclick=()=>openEditor(null);$('mCancel').onclick=closeModal;
+$('mDup').onclick=()=>{const c=JSON.parse(JSON.stringify(ed));delete c.id;openEditor(c,c)};
+$('mDel').onclick=()=>{if(!confirm('¿Eliminar la pregunta #'+ed.id+'?'))return;Q=Q.filter(q=>q!==ed);idx.delete(ed.id);closeModal();setDirty(true);render();toast('Pregunta eliminada.')};
+$('mSave').onclick=()=>{
+  const cat=$('fCat').value.trim(),text=$('fText').value.trim(),opts=fo.map(o=>o.trim()),info=$('fInfo').value.trim(),img=$('fImg').value.trim();
+  const diff=$('fDiff').value;let pts=parseInt($('fPts').value,10);if(!(pts>0))pts=DIFF[diff][1];
+  const e=m=>{$('err').textContent='⚠ '+m;return};
+  if(!cat)return e('Falta la categoría.');if(!text)return e('Falta el enunciado.');
+  if(opts.length<2||opts.some(o=>!o))return e('Todas las respuestas deben estar rellenas (mínimo 2).');
+  if(new Set(opts.map(norm)).size<opts.length)return e('Hay respuestas repetidas.');
+  if(fc<0||fc>=opts.length)return e('Marca cuál es la respuesta correcta.');
+  const dup=Q.find(q=>q!==ed&&norm(q.text)===norm(text));
+  if(dup&&!confirm('Ya existe una pregunta con el mismo enunciado (#'+dup.id+'). ¿Guardar igualmente?'))return;
+  const id=ed?ed.id:Q.reduce((m,q)=>Math.max(m,q.id||0),0)+1;
+  const o={id,text,options:opts,correctAnswerIndex:fc,category:cat,difficulty:diff,points:pts,info};
+  if(ed)Object.keys(ed).forEach(k=>{if(!KEYS.includes(k)&&k!=='image')o[k]=ed[k]});
+  if(img)o.image=img;
+  if(ed)Q[Q.indexOf(ed)]=o;else Q.push(o);
+  indexQ(o);if(!ed)F.cat=cat;closeModal();setDirty(true);render();toast(ed?'Pregunta actualizada (#'+id+').':'Pregunta creada (#'+id+').');
+};
+$('modal').addEventListener('mousedown',e=>{if(e.target===$('modal'))closeModal()});
+</script></body></html>

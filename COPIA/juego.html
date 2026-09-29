@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>100-R</title>
+<style>
+:root{
+  --bg:#1A0B2E;
+  --purple-mid:#3A1078;
+  --purple-primary:#7F00FF;
+  --gold:#FFD700;
+  --gold-soft:#CFB53B;
+  --text:#F5F0FF;
+  --text-dim:rgba(245,240,255,.7);
+  --card:#241040;
+  --card-border:rgba(255,255,255,.08);
+  --green:#43A047; --red:#E53935;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{
+  background:#0a0514;
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  display:flex;
+  justify-content:center;
+}
+
+/* ===== Marco de móvil: siempre se ve como un teléfono, incluso en ordenador ===== */
+.phone-frame{
+  width:100%;
+  max-width:480px;
+  min-height:100vh;
+  background: radial-gradient(circle at 50% 0%, var(--purple-mid), var(--bg) 60%);
+  display:flex;
+  flex-direction:column;
+  padding:16px;
+  padding-top:calc(16px + env(safe-area-inset-top,0px));
+  padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  gap:16px;
+  position:relative;
+}
+@media (min-width:560px){
+  body{padding:28px 0;}
+  .phone-frame{
+    min-height:88vh;
+    border-radius:38px;
+    border:8px solid #050208;
+    box-shadow:0 24px 70px rgba(0,0,0,.6);
+    overflow-y:auto;
+  }
+}
+
+/* ===== Marcador ===== */
+.scoreboard{
+  display:flex;flex-direction:column;gap:10px;
+  background:linear-gradient(90deg, var(--purple-mid), var(--purple-primary));
+  border-radius:18px;padding:12px 14px 14px;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);
+}
+.sb-top{display:flex;align-items:center;justify-content:space-between;}
+.team-box{flex:1;text-align:center;min-width:0;}
+.team-box h2{margin:0;font-size:.92rem;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.team-box .pts{font-size:2.6rem;line-height:1.05;font-weight:900;color:var(--gold);text-shadow:0 2px 10px rgba(0,0,0,.35);margin-top:2px;}
+
+/* Camino de rondas: A rellena desde la izquierda, B desde la derecha, la central da la victoria */
+.round-track{
+  display:grid;grid-template-columns:repeat(9,1fr);gap:5px;
+  background:rgba(0,0,0,.28);border-radius:12px;padding:6px;
+}
+.rt-cell{
+  aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);
+  font-size:.8rem;line-height:1;transition:background .3s, border-color .3s;
+}
+.rt-cell.final{border-color:var(--gold);background:rgba(255,215,0,.12);font-size:1.05rem;}
+.rt-cell.win-a{background:#B266FF;border-color:#E3C9FF;box-shadow:0 0 10px rgba(178,102,255,.7);}
+.rt-cell.win-b{background:var(--gold);border-color:#FFF2A6;box-shadow:0 0 10px rgba(255,215,0,.6);}
+.rt-cell.win-a.final,.rt-cell.win-b.final{color:#1a0b2e;}
+.rt-cell.fill-pop{animation:cellPop .6s ease;}
+@keyframes cellPop{0%{transform:scale(.5);}55%{transform:scale(1.3);}100%{transform:scale(1);}}
+
+/* ===== Cuadrado de puntos ===== */
+.pt-box{
+  flex:0 0 auto;width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:1.25rem;line-height:1;color:#1a1a1a;
+  border:2px solid rgba(0,0,0,.25);box-shadow:0 2px 6px rgba(0,0,0,.35);
+}
+.pt-box.lg{width:52px;height:52px;border-radius:12px;font-size:1.9rem;}
+.pt-box.sm{width:32px;height:32px;border-radius:8px;font-size:1.1rem;}
+.team-box.a{text-align:left;}
+.team-box.b{text-align:right;}
+.vs{padding:0 10px;font-weight:800;color:var(--gold-soft);font-size:.8rem;}
+.round-tag{text-align:center;font-size:.8rem;color:var(--text-dim);}
+
+/* ===== Pantallas ===== */
+.screen{display:none;flex-direction:column;gap:14px;flex:1;}
+.screen.active{display:flex;}
+
+h1{margin:0;font-size:1.35rem;text-align:center;}
+p.sub{text-align:center;color:var(--text-dim);margin:0 0 4px;font-size:.9rem;}
+
+.setup-box{
+  background:var(--card);border:1px solid var(--card-border);
+  border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;
+  margin-top:16px;
+}
+input[type=text]{
+  background:#150a28;border:1px solid var(--card-border);color:var(--text);
+  border-radius:12px;padding:13px;font-size:1rem;width:100%;
+}
+button{font-family:inherit;cursor:pointer;border:none;}
+.btn-primary{
+  background:linear-gradient(90deg,#9B30FF,var(--purple-primary));
+  color:#fff;font-weight:700;font-size:1rem;padding:15px;border-radius:14px;
+  box-shadow:0 4px 14px rgba(127,0,255,.4);
+  width:100%;
+}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ===== Info de selección ===== */
+.selection-info{text-align:center;font-size:.88rem;color:var(--text-dim);margin:0;}
+.selection-info b{color:var(--gold);}
+
+/* ===== Listas en filas horizontales de ancho completo ===== */
+.qlist{display:flex;flex-direction:column;gap:8px;}
+.q-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--card);border:2px solid var(--card-border);border-radius:14px;
+  padding:10px 12px;width:100%;
+  transition:border-color .12s, background .12s;
+}
+.q-row .row-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.q-row .cat{font-size:.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.q-row .meta{display:flex;gap:6px;align-items:center;}
+.q-row .diff{font-size:.62rem;padding:3px 8px;border-radius:20px;font-weight:700;color:#1a1a1a;white-space:nowrap;}
+.q-row .status{font-size:.68rem;font-weight:800;white-space:nowrap;}
+.q-row.kept{border-color:var(--green);background:rgba(67,160,71,.12);}
+.q-row.kept .status{color:var(--green);}
+.q-row.rival{opacity:.55;}
+.q-row.rival .status{color:var(--red);}
+.q-row.disabled{pointer-events:none;}
+
+.diff-VERY_EASY{background:#A5D6A7;}
+.diff-EASY{background:#C8E6C9;}
+.diff-MEDIUM{background:#FFF59D;}
+.diff-DIFFICULT{background:#FFE0B2;}
+.diff-VERY_DIFFICULT{background:#FFCDD2;}
+.diff-IMPOSSIBLE{background:#E1BEE7;}
+
+/* ===== Pantalla de juego ===== */
+.play-card{
+  background:var(--card);border:1px solid var(--card-border);border-radius:18px;
+  padding:18px;display:flex;flex-direction:column;gap:12px;
+}
+.play-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.answering-team{
+  font-weight:800;padding:5px 12px;border-radius:20px;background:var(--purple-primary);font-size:.8rem;
+}
+.q-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.q-text{font-size:1.05rem;font-weight:600;line-height:1.4;}
+
+.options{display:flex;flex-direction:column;gap:8px;}
+.opt-btn{
+  display:flex;align-items:center;gap:10px;width:100%;
+  background:#150a28;border:2px solid var(--card-border);color:var(--text);
+  padding:13px;border-radius:14px;font-size:.95rem;text-align:left;
+  white-space:nowrap;overflow:hidden;
+}
+.opt-btn .opt-label{
+  flex:0 0 auto;width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.8rem;
+}
+.opt-btn .opt-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.opt-btn.correct{border-color:var(--green);background:rgba(67,160,71,.25);}
+.opt-btn.incorrect{border-color:var(--red);background:rgba(229,57,53,.25);}
+.opt-btn:disabled{opacity:.7;}
+
+.feedback{text-align:center;font-weight:800;font-size:1rem;}
+.feedback.ok{color:#8BFF9E;}
+.feedback.bad{color:#FF8B8B;}
+.info-line{font-size:.82rem;color:var(--text-dim);text-align:center;font-style:italic;}
+
+.result-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+.result-row{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:9px 12px;font-size:.78rem;
+}
+.result-row .who{font-weight:700;white-space:nowrap;}
+.result-row .cat-diff{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.badge-ok{color:var(--green);font-weight:800;}
+.badge-bad{color:var(--red);font-weight:800;}
+
+.big-result{
+  text-align:center;background:var(--card);border-radius:18px;padding:24px;border:1px solid var(--card-border);
+}
+.big-result h2{color:var(--gold);font-size:1.25rem;margin:0 0 6px;}
+.big-result .score-line{font-size:1rem;margin:8px 0;}
+
+/* ===== Turno / tablero de preguntas ===== */
+.turn-banner{
+  text-align:center;font-weight:800;font-size:1.1rem;letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--gold-soft),var(--gold));
+  color:#1a0b2e;border-radius:14px;padding:10px 14px;
+  box-shadow:0 4px 14px rgba(255,215,0,.25);
+  animation:bannerIn .35s ease;
+}
+@keyframes bannerIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+
+.board-columns{display:flex;gap:8px;}
+.board-column{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;}
+.board-col-title{font-size:.74rem;font-weight:800;text-align:center;color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.board-item{
+  background:var(--card);border:2px solid var(--card-border);border-radius:10px;
+  padding:7px 8px;display:flex;flex-direction:column;gap:3px;cursor:default;
+  transition:transform .12s, border-color .12s, opacity .12s;
+}
+.board-item .cat{font-size:.68rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.board-item .meta{display:flex;justify-content:space-between;align-items:center;gap:4px;}
+.board-item .diff{font-size:.5rem;padding:1px 5px;border-radius:20px;font-weight:700;color:#1a1a1a;white-space:nowrap;}
+.board-item .result-mark{font-size:.85rem;font-weight:800;}
+.board-item.locked{opacity:.4;}
+.board-item.answered{opacity:.55;}
+.board-item.correct{border-color:var(--green);background:rgba(67,160,71,.14);}
+.board-item.incorrect{border-color:var(--red);background:rgba(229,57,53,.14);}
+.board-item.active-turn{cursor:pointer;border-color:var(--purple-primary);box-shadow:0 0 0 2px rgba(127,0,255,.35);}
+.board-item.active-turn:active{transform:scale(.96);}
+
+/* ===== Animación de puntos ===== */
+.score-pop{animation:scorePop .5s ease;}
+@keyframes scorePop{0%{transform:scale(1);}45%{transform:scale(1.4);}100%{transform:scale(1);}}
+.team-box{position:relative;}
+.score-float{
+  position:absolute;font-weight:800;font-size:.95rem;pointer-events:none;
+  animation:floatUp .9s ease forwards;color:#8BFF9E;
+}
+@keyframes floatUp{
+  0%{opacity:0;transform:translateY(0);}
+  15%{opacity:1;}
+  100%{opacity:0;transform:translateY(-26px);}
+}
+
+
+/* ===== Setup: tarjetas de equipo ===== */
+.team-cards{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-top:8px;}
+.team-cards .vs{padding:0 2px;}
+.team-card{background:var(--card);border:2px solid var(--card-border);border-radius:20px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;}
+.team-card.a{border-color:rgba(127,0,255,.65);}
+.team-card.b{border-color:rgba(255,215,0,.55);}
+.team-badge{width:100%;aspect-ratio:1;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:4rem;background:linear-gradient(145deg,var(--purple-mid),var(--purple-primary));box-shadow:0 4px 14px rgba(127,0,255,.4);}
+.team-card.b .team-badge{background:linear-gradient(145deg,#8a6d00,var(--gold-soft));box-shadow:0 4px 14px rgba(255,215,0,.25);}
+.team-card input[type=text]{text-align:center;font-weight:700;padding:10px 6px;font-size:.95rem;}
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;width:100%;}
+.icon-btn{aspect-ratio:1;background:#150a28;border:2px solid transparent;border-radius:10px;font-size:1.1rem;padding:0;line-height:1;overflow:hidden;}
+.icon-btn.sel{border-color:var(--gold);background:rgba(255,215,0,.15);}
+.icon-btn:disabled{opacity:.2;cursor:not-allowed;}
+.rules-box{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:16px;}
+.rules-box h3{margin:0 0 12px;font-size:1.05rem;color:var(--text);letter-spacing:.2px;}
+.rules-box ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;}
+.rules-box li{
+  display:flex;gap:12px;align-items:center;
+  background:rgba(255,255,255,.04);border-radius:14px;padding:10px 12px;
+}
+.rule-tile{
+  flex:0 0 auto;min-width:52px;height:52px;padding:0 6px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:1.15rem;color:#fff;
+  background:linear-gradient(145deg,var(--purple-mid),var(--purple-primary));
+  box-shadow:0 3px 10px rgba(127,0,255,.35);
+}
+.rule-tile.gold{background:linear-gradient(145deg,#8a6d00,var(--gold));color:#1a0b2e;box-shadow:0 3px 10px rgba(255,215,0,.25);}
+.rule-text{display:flex;flex-direction:column;gap:2px;font-size:.8rem;line-height:1.35;color:var(--text-dim);min-width:0;}
+.rule-text b{font-size:.92rem;color:var(--text);}
+
+/* ===== Tablero compartido de 10 preguntas ===== */
+.pool-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pool-grid .board-item{padding:12px 10px;gap:6px;}
+.pool-grid .board-item .cat{font-size:.82rem;}
+.pool-grid .board-item .diff{font-size:.6rem;padding:2px 7px;}
+
+/* ===== Transición de turno ===== */
+.turn-overlay{
+  position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:rgba(10,5,20,.94);opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+.turn-overlay.show{opacity:1;pointer-events:auto;}
+.turn-overlay .to-badge{
+  width:130px;height:130px;border-radius:34px;display:flex;align-items:center;justify-content:center;font-size:4.6rem;
+  background:linear-gradient(145deg,var(--purple-mid),var(--purple-primary));box-shadow:0 8px 30px rgba(127,0,255,.55);
+  transform:scale(.4);
+}
+.turn-overlay.b .to-badge{background:linear-gradient(145deg,#8a6d00,var(--gold-soft));box-shadow:0 8px 30px rgba(255,215,0,.35);}
+.turn-overlay.show .to-badge{animation:toPop .6s cubic-bezier(.2,1.4,.4,1) forwards;}
+.turn-overlay .to-name{font-size:1.7rem;font-weight:800;color:var(--gold);text-align:center;padding:0 20px;transform:translateY(14px);opacity:0;}
+.turn-overlay.show .to-name{animation:toUp .5s .15s ease forwards;}
+.turn-overlay .to-sub{font-size:.95rem;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;opacity:0;}
+.turn-overlay.show .to-sub{animation:toUp .5s .3s ease forwards;}
+@keyframes toPop{to{transform:scale(1);}}
+@keyframes toUp{to{transform:translateY(0);opacity:1;}}
+
+/* ===== Imagen de la categoría ===== */
+.q-image{display:none;border-radius:14px;overflow:hidden;background:#150a28;border:1px solid var(--card-border);}
+.q-image img{display:block;width:100%;height:180px;object-fit:contain;}
+
+/* ===== Imágenes de la carpeta Resources ===== */
+.game-logo{display:block;margin:0 auto;max-width:80%;max-height:150px;height:auto;object-fit:contain;}
+.avatar-img{width:100%;height:100%;object-fit:cover;display:block;}
+.icon-btn .avatar-img{border-radius:8px;}
+.sb-team{display:flex;align-items:center;gap:6px;min-width:0;}
+.team-box.b .sb-team{justify-content:flex-end;}
+.sb-team h2{min-width:0;}
+.sb-avatar{width:26px;height:26px;flex:0 0 26px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1rem;background:rgba(0,0,0,.25);}
+.turn-overlay .to-badge{overflow:hidden;}
+
+/* ===== Pantalla inicial modernizada (mismos colores) ===== */
+#screen-setup{gap:18px;}
+#screen-setup .game-logo{
+  max-width:86%;max-height:170px;margin:6px auto 0;
+  filter:drop-shadow(0 6px 22px rgba(127,0,255,.55));
+}
+#screen-setup h1{
+  font-size:1.9rem;font-weight:900;letter-spacing:-.5px;
+  background:linear-gradient(90deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;
+  padding:14px 0 4px;
+}
+
+/* Imagen siempre a tamaño completo del cuadrado */
+.team-badge,.icon-btn,.turn-overlay .to-badge{position:relative;}
+.team-badge .avatar-img,.icon-btn .avatar-img,.turn-overlay .to-badge .avatar-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+
+.team-cards{grid-template-columns:1fr auto 1fr;gap:0;margin-top:0;position:relative;}
+.team-cards .vs{
+  width:38px;height:38px;padding:0;border-radius:50%;z-index:2;margin:0 -19px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);border:2px solid var(--gold);color:var(--gold);
+  font-size:.75rem;letter-spacing:.5px;box-shadow:0 0 16px rgba(255,215,0,.3);
+}
+.team-card{
+  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:8px 8px 12px;gap:12px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.team-card.a{border-color:rgba(160,80,255,.7);box-shadow:0 8px 28px rgba(127,0,255,.22);}
+.team-card.b{border-color:rgba(255,215,0,.6);box-shadow:0 8px 28px rgba(255,215,0,.12);}
+.team-badge{border-radius:18px;}
+.team-card input[type=text]{
+  background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,.18);border-radius:0;
+  padding:8px 4px;font-size:1rem;font-weight:800;
+  transition:border-color .2s;
+}
+.team-card input[type=text]:focus{outline:none;border-bottom-color:var(--gold);}
+.team-card input[type=text]::placeholder{color:var(--text-dim);font-weight:600;}
+.icon-grid{gap:6px;padding:0 4px;}
+.icon-btn{border-radius:12px;background:rgba(255,255,255,.06);border:2px solid transparent;transition:transform .12s,border-color .12s;}
+.icon-btn:active{transform:scale(.92);}
+.icon-btn.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,215,0,.25);}
+
+/* Reglas sin caja, con separadores finos */
+#screen-setup .rules-box{background:transparent;border:none;padding:0 2px;}
+#screen-setup .rules-box h3{
+  display:flex;align-items:center;gap:12px;margin:4px 0 6px;
+  font-size:1rem;font-weight:800;color:var(--text);
+}
+#screen-setup .rules-box h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.25),transparent);}
+#screen-setup .rules-box ul{gap:0;}
+#screen-setup .rules-box li{
+  background:transparent;border-radius:0;padding:12px 0;gap:14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+#screen-setup .rules-box li:last-child{border-bottom:none;}
+.rule-tile{min-width:56px;height:44px;border-radius:14px;font-size:1.05rem;letter-spacing:-.3px;}
+
+/* Botón de empezar */
+#btnStart{
+  padding:18px;font-size:1.08rem;border-radius:18px;letter-spacing:.3px;
+  box-shadow:0 8px 26px rgba(127,0,255,.5), inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .12s, box-shadow .12s;
+}
+#btnStart:not(:disabled):active{transform:scale(.98);}
+
+/* ===== Turno pegado al marcador + info de ronda ===== */
+.sb-turn{
+  margin:2px -14px -14px;padding:11px 14px;border-radius:0 0 18px 18px;
+  text-align:center;font-weight:900;font-size:1rem;letter-spacing:.6px;
+  background:linear-gradient(90deg,var(--gold-soft),var(--gold));color:#1a0b2e;
+}
+.sb-turn.pop{animation:bannerIn .35s ease;}
+.board-info{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 4px;font-weight:800;font-size:1rem;color:var(--text);
+}
+.board-info .count{font-weight:600;color:var(--text-dim);font-size:.95rem;}
+.board-info .count b{color:var(--gold);font-size:1.25rem;font-weight:900;}
+
+/* ===== Cuadrado de puntos con etiqueta "pts" ===== */
+.pt-box{flex-direction:column;gap:1px;width:46px;height:46px;line-height:1;}
+.pt-box b{font-size:1.3rem;font-weight:900;}
+.pt-box small{font-size:.55rem;font-weight:800;letter-spacing:.3px;opacity:.75;}
+.pt-box.sm{width:40px;height:40px;}
+.pt-box.sm b{font-size:1.1rem;}
+.pt-box.sm small{font-size:.5rem;}
+.pt-box.lg{width:64px;height:64px;}
+.pt-box.lg b{font-size:2rem;}
+.pt-box.lg small{font-size:.65rem;}
+.fly-pt{position:fixed;z-index:1000;margin:0;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5);}
+
+/* ===== Selección con menos texto + trofeo ===== */
+.q-row .status{
+  flex:0 0 auto;width:28px;height:28px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;font-weight:900;color:#fff;
+}
+.q-row.kept .status{background:var(--green);border-color:var(--green);color:#fff;}
+.rt-cell.final{position:relative;}
+.rt-trophy{position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px);object-fit:contain;display:block;}
+
+/* ===== Cabecera de la pregunta + imagen a tamaño completo ===== */
+.play-card{padding:14px;gap:14px;}
+.play-header{flex-wrap:nowrap;gap:12px;}
+.ph-main{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;}
+.ph-cat{font-size:1.25rem;font-weight:900;line-height:1.15;letter-spacing:-.2px;color:var(--text);overflow-wrap:anywhere;}
+.diff-chip{
+  display:inline-block;padding:5px 13px;border-radius:20px;
+  font-size:.72rem;font-weight:800;letter-spacing:.4px;color:#1a1a1a;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+.q-image{position:relative;aspect-ratio:16/10;border:none;background:#150a28;}
+.q-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;}
+.q-image img.img-transp{object-fit:contain;object-position:50% 50%;background:#fff;}
+
+/* ===== Rondas ganadas: fondo amarillo + estrella violeta ===== */
+.rt-cell.win-a,.rt-cell.win-b{
+  background:linear-gradient(145deg,#FFE55C,var(--gold));
+  border-color:#FFF6B8;box-shadow:0 0 10px rgba(255,215,0,.6);
+}
+.rt-cell.win-a:not(.final)::after,.rt-cell.win-b:not(.final)::after{
+  content:"";width:74%;height:74%;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%237F00FF' stroke='%237F00FF' stroke-width='1.2' stroke-linejoin='round' d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+/* ===== Cabecera del marcador: icono grande + nombre + puntos ===== */
+.scoreboard{padding:10px 12px 14px;}
+.sb-top{gap:8px;}
+.team-box{display:flex;align-items:center;gap:10px;min-width:0;}
+.team-box.a{justify-content:flex-start;text-align:left;}
+.team-box.b{justify-content:flex-end;text-align:right;}
+.sb-info{position:relative;min-width:0;display:flex;flex-direction:column;}
+.team-box h2{font-size:1rem;font-weight:800;line-height:1.15;}
+.team-box .pts{font-size:2.8rem;line-height:1;margin-top:0;}
+.sb-avatar{
+  position:relative;width:64px;height:64px;flex:0 0 64px;border-radius:16px;font-size:2rem;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+.team-box.a .sb-avatar{border:2px solid #D2ADFF;}
+.team-box.b .sb-avatar{border:2px solid var(--gold);}
+.sb-avatar .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.scoreboard .vs{
+  flex:0 0 auto;width:30px;height:30px;padding:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.3);border:1.5px solid var(--gold);color:var(--gold);font-size:.68rem;
+}
+
+/* ===== Preguntas ya respondidas en el tablero ===== */
+.bi-top{display:flex;flex-direction:column;gap:6px;}
+.board-item.done{background:#17141f;border-color:rgba(255,255,255,.06);cursor:default;pointer-events:none;box-shadow:none;}
+.board-item.done .bi-top{filter:grayscale(1);opacity:.45;}
+.bi-result{display:flex;flex-direction:column;gap:1px;line-height:1.2;border-top:1px solid rgba(255,255,255,.08);padding-top:6px;}
+.bi-result b{font-size:.8rem;font-weight:900;}
+.bi-result span{font-size:.68rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bi-result.ok b{color:#8BFF9E;}
+.bi-result.bad b{color:#FF8B8B;}
+
+/* ===== Resumen animado de la ronda ===== */
+.rr-skip{background:rgba(255,255,255,.1);color:var(--text);border-radius:20px;padding:6px 14px;font-weight:700;font-size:.8rem;}
+.rr-list{display:flex;flex-direction:column;gap:8px;}
+.rr-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--card-border);border-left:4px solid var(--green);
+  border-radius:14px;padding:8px 12px 8px 10px;
+}
+.rr-row.bad{border-left-color:var(--red);}
+.rr-row.enter.side-a{animation:rrInA .45s cubic-bezier(.2,1.2,.4,1);}
+.rr-row.enter.side-b{animation:rrInB .45s cubic-bezier(.2,1.2,.4,1);}
+@keyframes rrInA{from{opacity:0;transform:translateX(-18px) scale(.96);}to{opacity:1;transform:none;}}
+@keyframes rrInB{from{opacity:0;transform:translateX(18px) scale(.96);}to{opacity:1;transform:none;}}
+.rr-av{
+  position:relative;flex:0 0 40px;width:40px;height:40px;border-radius:11px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:rgba(0,0,0,.25);
+}
+.rr-av.a{border:2px solid #D2ADFF;}
+.rr-av.b{border:2px solid var(--gold);}
+.rr-av .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.rr-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.rr-mid b{font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rr-mid span{font-size:.74rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rr-out{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.rr-chip{font-weight:900;font-size:.95rem;color:#8BFF9E;}
+.rr-row.bad .rr-chip{color:#FF8B8B;}
+.rr-run{font-size:.78rem;}
+.rr-run i{font-style:normal;font-weight:800;}
+.rr-run .a{color:#D2ADFF;}
+.rr-run .b{color:var(--gold);}
+.rr-run .sep{color:var(--text-dim);margin:0 3px;}
+
+.rr-winner{
+  text-align:center;padding:22px 16px;border-radius:22px;
+  background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.02));
+  border:1px solid rgba(255,215,0,.55);box-shadow:0 0 34px rgba(255,215,0,.2);
+  animation:winIn .65s cubic-bezier(.2,1.3,.4,1);
+}
+.rr-winner.a{border-color:#C79BFF;box-shadow:0 0 34px rgba(127,0,255,.4);}
+@keyframes winIn{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
+.rr-w-avatar{
+  position:relative;width:96px;height:96px;margin:0 auto 12px;border-radius:24px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:3rem;
+  background:linear-gradient(145deg,var(--purple-mid),var(--purple-primary));
+  border:3px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+.rr-winner.a .rr-w-avatar{border-color:#D2ADFF;}
+.rr-w-avatar .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.rr-w-title{font-size:1.4rem;font-weight:900;color:var(--gold);line-height:1.2;}
+.rr-w-score{font-size:2.6rem;font-weight:900;line-height:1.1;margin-top:6px;}
+.rr-w-score .a{color:#D2ADFF;}
+.rr-w-score .b{color:var(--gold);}
+.rr-w-score .sep{color:var(--text-dim);margin:0 10px;font-weight:600;}
+@media (prefers-reduced-motion: reduce){
+  .rr-row.enter,.rr-winner{animation:none;}
+}
+
+/* ===== AJUSTE A PANTALLA: altura = alto del móvil, sin scroll ===== */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;}
+body{height:100vh;height:100dvh;align-items:center;}
+.phone-frame{height:100vh;height:100dvh;min-height:0;overflow:hidden;gap:8px;padding:10px;
+  padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));}
+@media (min-width:560px){body{padding:20px 0;}.phone-frame{height:min(900px,calc(100dvh - 40px));min-height:0;}}
+.screen{flex:1;min-height:0;gap:8px;}
+
+/* Marcador compacto */
+.scoreboard{flex:0 0 auto;padding:8px 10px 12px;gap:6px;border-radius:16px;}
+.sb-avatar{width:46px;height:46px;flex:0 0 46px;border-radius:13px;}
+.team-box .pts{font-size:2rem;}
+.team-box h2{font-size:.9rem;}
+.round-track{padding:4px;gap:4px;}
+.rt-cell{aspect-ratio:auto;height:20px;border-radius:6px;}
+.sb-turn{margin:0 -10px -12px;padding:6px 10px;font-size:.88rem;border-radius:0 0 16px 16px;}
+.board-info{font-size:.92rem;}
+.board-info .count b{font-size:1.1rem;}
+
+/* Inicio */
+#screen-setup{gap:8px;justify-content:space-evenly;}
+#screen-setup .game-logo{width:auto;max-width:60%;max-height:clamp(44px,9dvh,90px);margin:0 auto;}
+#screen-setup h1{font-size:1.4rem;padding:0;}
+.team-card{padding:8px 6px 10px;gap:8px;}
+.team-badge{width:clamp(50px,11dvh,96px);height:auto;aspect-ratio:1;}
+.team-card input[type=text]{padding:5px 4px;font-size:.92rem;}
+.icon-grid{gap:5px;padding:0 2px;}
+#btnStart{padding:14px;font-size:1rem;}
+.rules-modal{position:absolute;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+  padding:14px;background:rgba(10,5,20,.88);}
+.rules-modal.open{display:flex;}
+#screen-setup .rules-box li{padding:8px 0;gap:12px;}
+.rule-tile{min-width:50px;height:40px;}
+
+/* Selección: las 10 filas caben siempre (1 columna si hay altura, 2 si no) */
+.qwrap{flex:1;min-height:0;container-type:size;}
+.qlist{height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(5,minmax(0,1fr));gap:6px;}
+.q-row{padding:4px 8px;gap:8px;min-height:0;overflow:hidden;border-radius:12px;}
+.q-row .pt-box{width:38px;height:38px;}
+.q-row .pt-box b{font-size:1.05rem;}
+.q-row .cat{white-space:normal;font-size:.74rem;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.q-row .diff{font-size:.55rem;padding:2px 6px;}
+.q-row .status{width:22px;height:22px;font-size:.8rem;}
+@container (min-height:450px){
+  .qlist{grid-template-columns:1fr;grid-template-rows:repeat(10,minmax(0,1fr));gap:4px;}
+  .q-row .pt-box{width:32px;height:32px;}
+  .q-row .row-main{flex-direction:row;align-items:center;gap:8px;}
+  .q-row .cat{flex:1;-webkit-line-clamp:1;font-size:.82rem;}
+}
+#btnConfirmSelection{padding:12px;}
+
+/* Tablero: 10 tarjetas en 2 columnas x 5 filas repartidas por la altura */
+.pool-grid{flex:1;min-height:0;grid-template-rows:repeat(5,minmax(0,1fr));gap:6px;}
+.pool-grid .board-item{padding:4px 8px;min-height:0;overflow:hidden;justify-content:center;}
+.pool-grid .bi-top{display:grid;grid-template-columns:1fr auto;grid-template-areas:"c p" "d p";align-items:center;column-gap:6px;row-gap:2px;}
+.pool-grid .meta{display:contents;}
+.pool-grid .board-item .cat{grid-area:c;font-size:.8rem;}
+.pool-grid .board-item .diff{grid-area:d;justify-self:start;font-size:.55rem;padding:2px 6px;}
+.pool-grid .pt-box.sm{grid-area:p;width:34px;height:34px;}
+
+/* Pregunta: la imagen se encoge para dejar sitio a todo lo demás */
+#playCard{flex:1;min-height:0;padding:10px 12px;gap:8px;overflow-y:auto;}
+#playCard>*{flex-shrink:0;}
+#playCard>.q-image{flex:1 1 0;min-height:0;aspect-ratio:auto;}
+.play-header{gap:8px;}
+.ph-main{gap:4px;}
+.ph-cat{font-size:1.05rem;}
+.diff-chip{padding:3px 10px;font-size:.66rem;}
+.pt-box.lg{width:46px;height:46px;}
+.pt-box.lg b{font-size:1.5rem;}
+.q-text{font-size:clamp(.86rem,2.3dvh,1rem);line-height:1.3;}
+.options{gap:6px;}
+.opt-btn{padding:clamp(7px,1.4dvh,11px) 10px;font-size:clamp(.8rem,2dvh,.92rem);}
+.feedback{font-size:.9rem;}
+.info-line{font-size:.75rem;max-height:2.7em;overflow:hidden;}
+#btnContinue{padding:12px;}
+
+/* Resultados */
+.rr-list{flex:1;min-height:0;overflow-y:auto;gap:6px;scrollbar-width:none;}
+.rr-list::-webkit-scrollbar{display:none;}
+.rr-row{flex:0 0 auto;padding:5px 10px 5px 8px;}
+.rr-av{flex:0 0 32px;width:32px;height:32px;}
+.rr-winner{flex:0 0 auto;padding:12px;}
+.rr-w-avatar{width:60px;height:60px;margin-bottom:6px;}
+.rr-w-title{font-size:1.15rem;}
+.rr-w-score{font-size:1.9rem;margin-top:2px;}
+.big-result{padding:18px;}
+
+/* Móviles bajitos */
+@media (max-height:640px){
+  .sb-avatar{width:38px;height:38px;flex-basis:38px;}
+  .team-box .pts{font-size:1.6rem;}
+  .rt-cell{height:15px;}
+  .sb-turn{padding:4px 10px;font-size:.8rem;}
+  .q-row .diff{display:none;}
+  .pool-grid .pt-box.sm{width:30px;height:30px;}
+  .pt-box.lg{width:40px;height:40px;}
+  .ph-cat{font-size:.95rem;}
+}
+
+/* ===== Inicio v2: eslogan, botón de reglas bonito, empezar abajo del todo ===== */
+.tagline{margin:0;text-align:center;font-size:.86rem;font-weight:600;line-height:1.3;color:var(--text-dim);padding:0 14px;}
+#screen-setup{justify-content:flex-start;gap:8px;}
+#screen-setup .team-cards{margin-top:auto;}
+#btnStart{margin-top:auto;}
+#btnStart:not(:disabled){animation:startGlow 2.4s ease-in-out infinite;}
+@keyframes startGlow{0%,100%{box-shadow:0 8px 24px rgba(127,0,255,.45),inset 0 1px 0 rgba(255,255,255,.25);}
+  50%{box-shadow:0 8px 32px rgba(178,102,255,.8),inset 0 1px 0 rgba(255,255,255,.35);}}
+@media (prefers-reduced-motion:reduce){#btnStart:not(:disabled){animation:none;}}
+
+.btn-rules{
+  width:100%;display:flex;align-items:center;gap:12px;text-align:left;color:var(--text);
+  padding:10px 14px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(127,0,255,.35),rgba(255,215,0,.12));
+  border:1px solid rgba(255,215,0,.5);box-shadow:0 6px 18px rgba(127,0,255,.22);
+  transition:transform .12s;
+}
+.btn-rules:active{transform:scale(.98);}
+.br-icon{flex:0 0 auto;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,215,0,.45);}
+.br-text{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0;}
+.br-text b{font-size:.98rem;font-weight:800;}
+.br-text small{font-size:.72rem;color:var(--text-dim);}
+.br-arrow{font-size:1.7rem;line-height:1;color:var(--gold);font-weight:700;}
+
+/* Ventana de reglas */
+.rules-sheet{width:100%;max-height:100%;display:flex;flex-direction:column;gap:10px;
+  background:var(--bg);border:1px solid rgba(255,215,0,.35);border-radius:22px;padding:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.6);}
+.rs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:0 0 auto;}
+.rs-head h3{margin:0;font-size:1.15rem;font-weight:900;color:var(--gold);}
+.rs-x{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);color:var(--text);font-size:.9rem;}
+.rs-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+.rules-sheet .rules-box{background:transparent;border:none;padding:0;}
+.rules-sheet .rules-box li{align-items:flex-start;padding:10px 0;gap:12px;background:transparent;border-radius:0;border-bottom:1px solid rgba(255,255,255,.08);}
+.rules-sheet .rules-box li:last-child{border-bottom:none;}
+.rules-sheet .rule-tile{margin-top:2px;}
+.rules-sheet .rule-text{font-size:.78rem;gap:5px;}
+.rules-sheet .rule-text u{text-decoration-color:var(--gold);text-underline-offset:2px;color:var(--text);}
+.lvl-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
+.lvl-row .diff-chip{padding:3px 8px;font-size:.6rem;box-shadow:none;}
+.rule-example{display:block;background:rgba(255,255,255,.06);border-left:3px solid var(--gold);border-radius:8px;padding:6px 9px;font-size:.74rem;line-height:1.35;}
+.rule-example b{display:inline;font-size:.74rem;color:var(--gold);}
+.rule-tile.trophy{background:rgba(255,215,0,.12);border:1.5px solid var(--gold);box-shadow:0 0 12px rgba(255,215,0,.25);font-size:1.5rem;}
+.rule-tile.trophy img{height:32px;width:auto;object-fit:contain;display:block;}
+@media (max-height:640px){
+  .tagline{font-size:.95rem;}
+  .br-icon{width:32px;height:32px;}
+  .btn-rules{padding:7px 12px;}
+}
+
+/* ===== Inicio v3: sin brillos violeta/amarillo, iconos minimalistas, botones modernos ===== */
+.tagline{font-size:1.02rem;font-weight:700;color:var(--text);letter-spacing:.1px;}
+.tagline b{color:var(--gold);font-weight:900;}
+.tagline span{color:var(--gold);}
+#screen-setup{padding-top:clamp(6px,2.4dvh,22px);gap:8px;}
+#screen-setup .game-logo{margin:0 auto;max-height:clamp(48px,10dvh,100px);}
+#screen-setup .team-cards{margin-top:2px;flex:1 0 auto;max-height:430px;align-items:stretch;}
+.team-card,.team-card.a,.team-card.b{
+  border:1px solid rgba(255,255,255,.12);box-shadow:none;justify-content:space-evenly;
+  background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));}
+.team-cards .vs{border-color:rgba(255,255,255,.35);color:var(--text);box-shadow:none;align-self:center;}
+
+/* Imagen del equipo: solo el PNG, con un brillo suave hecho con el propio PNG */
+.team-card.a .team-badge,.team-card.b .team-badge,.team-badge{
+  background:none;box-shadow:none;overflow:visible;border-radius:0;
+  width:clamp(52px,15dvh,132px);height:auto;aspect-ratio:1;position:relative;}
+.team-badge::before,.icon-btn.sel::before{
+  content:"";position:absolute;inset:-3px;z-index:0;pointer-events:none;
+  background:var(--av) center/contain no-repeat;filter:blur(10px) saturate(1.4);opacity:.7;}
+.team-badge .avatar-img,.icon-btn .avatar-img{z-index:1;border-radius:14px;}
+.icon-grid{gap:8px;padding:0 4px;}
+.icon-btn{background:none;border:none;border-radius:0;overflow:visible;box-shadow:none;position:relative;
+  transition:transform .15s,opacity .15s;}
+.icon-btn:not(.sel){opacity:.72;}
+.icon-btn.sel{background:none;border:none;box-shadow:none;transform:scale(1.14);opacity:1;z-index:2;}
+.icon-btn:disabled{opacity:.18;}
+
+/* Botón de reglas */
+#screen-setup .btn-rules{margin-top:auto;}
+#screen-setup #btnStart{margin-top:0;}
+.btn-rules{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:10px 14px;
+  box-shadow:0 8px 22px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.10);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
+.br-icon{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.14);color:var(--gold);}
+.br-icon svg{width:21px;height:21px;}
+.br-arrow{color:var(--text-dim);display:flex;}
+.br-arrow svg{width:20px;height:20px;}
+.br-icon svg,.br-arrow svg,.rs-x svg,.rs-ic svg,.rules-sheet .rule-tile svg,.spec-arrow{
+  fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+
+/* Botón de empezar */
+#btnStart{display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:16px;font-size:1.05rem;font-weight:800;letter-spacing:.2px;border-radius:18px;
+  background:linear-gradient(135deg,#A855FF 0%,#7F00FF 55%,#5B21E6 100%);
+  border:1px solid rgba(255,255,255,.22);}
+#btnStart:not(:disabled)::after{content:"";width:20px;height:20px;flex:0 0 20px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat;}
+
+/* Ventana de reglas */
+.rs-head h3{display:flex;align-items:center;gap:8px;}
+.rs-ic{display:flex;color:var(--gold);} .rs-ic svg{width:20px;height:20px;}
+.rs-x{display:flex;align-items:center;justify-content:center;padding:0;border:1px solid rgba(255,255,255,.14);}
+.rs-x svg{width:16px;height:16px;}
+.rules-sheet .rule-tile{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
+  box-shadow:none;color:var(--text);font-size:.92rem;min-width:52px;height:42px;}
+.rules-sheet .rule-tile.ic{color:var(--gold);}
+.rules-sheet .rule-tile svg{width:22px;height:22px;}
+.rules-sheet .rule-tile.trophy{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.6);}
+.spec-list{display:flex;flex-direction:column;gap:4px;}
+.spec-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border-radius:8px;padding:5px 10px;font-size:.76rem;}
+.spec-row s{color:var(--text-dim);text-decoration-color:rgba(255,139,139,.85);}
+.spec-arrow{width:14px;height:14px;flex:0 0 14px;color:var(--gold);}
+.spec-row b{font-size:.8rem;color:var(--text);}
+
+/* ===== v4: pregunta con altura fija + reglas por páginas ===== */
+.feedback{min-height:1.3em;line-height:1.3;}
+.info-line{max-height:none;overflow:visible;font-size:clamp(.7rem,1.85dvh,.8rem);line-height:1.35;}
+.tw-off{opacity:0;}
+#btnContinue{display:block;}
+
+.rules-sheet{gap:8px;}
+.rs-pages{display:grid;flex:1 1 auto;min-height:0;overflow:hidden;position:relative;}
+.rs-page{grid-area:1/1;display:flex;flex-direction:column;justify-content:center;gap:2px;
+  visibility:hidden;opacity:0;transform:translateX(24px);
+  transition:opacity .25s ease,transform .25s ease,visibility 0s .25s;}
+.rs-page.before{transform:translateX(-24px);}
+.rs-page.active{visibility:visible;opacity:1;transform:none;transition:opacity .25s ease,transform .25s ease;}
+.rs-page-title{font-size:.72rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--gold);padding:0 2px 2px;}
+.rules-sheet .rules-box li{padding:9px 0;}
+.rules-sheet .rule-text{font-size:calc(.8rem * var(--rs,1));}
+.rules-sheet .rules-box li{padding:calc(9px * var(--rs,1)) 0;}
+.rs-dots{display:flex;justify-content:center;gap:7px;flex:0 0 auto;}
+.rs-dot{width:7px;height:7px;padding:0;border-radius:50%;background:rgba(255,255,255,.22);transition:width .2s,background .2s;}
+.rs-dot.on{width:20px;border-radius:5px;background:var(--gold);}
+.rs-nav{display:flex;gap:8px;flex:0 0 auto;}
+.rs-nav .btn-primary{flex:1;padding:13px;}
+.btn-ghost{flex:0 0 32%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:var(--text);
+  font-weight:700;font-size:1rem;border-radius:14px;padding:13px;}
+@media (max-height:640px){
+  .rules-sheet{padding:12px;gap:6px;}
+  .rules-sheet .rules-box li{padding:6px 0;}
+  .rules-sheet .rule-text{font-size:calc(.74rem * var(--rs,1));}
+  .rs-nav .btn-primary,.btn-ghost{padding:10px;}
+}
+
+/* Móviles de poca altura: la imagen conserva un tamaño útil */
+#playCard>.q-image{min-height:64px;}
+@media (max-height:720px){
+  #playCard{gap:6px;padding:8px 10px;}
+  .options{gap:4px;}
+  .opt-btn{padding:6px 10px;font-size:.84rem;border-radius:12px;}
+  .opt-btn .opt-label{width:22px;height:22px;font-size:.72rem;}
+  .q-text{font-size:.84rem;line-height:1.25;}
+  .feedback{font-size:.82rem;min-height:1.2em;}
+  .info-line{font-size:.68rem;line-height:1.3;}
+  #btnContinue{padding:9px;font-size:.92rem;}
+  .ph-cat{font-size:.95rem;}
+}
+
+/* ===== v5: espacio bajo la info de respuesta, inicio reorganizado, selector de avatares ===== */
+#btnContinue{margin-top:14px;}
+.info-line{padding-bottom:2px;}
+@media (max-height:720px){#btnContinue{margin-top:10px;}}
+
+.rs-pages.scroll{overflow-y:auto;}
+.rs-pages.scroll .rs-page{justify-content:flex-start;}
+
+/* Inicio: logo arriba (centrado en el hueco), equipos + reglas + empezar agrupados abajo */
+.setup-hero{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+.setup-bottom{flex:0 0 auto;display:flex;flex-direction:column;gap:10px;}
+#screen-setup{justify-content:flex-start;padding-top:clamp(6px,2.4dvh,22px);}
+#screen-setup .setup-bottom .btn-rules,#screen-setup .setup-bottom #btnStart{margin-top:0;}
+#screen-setup .team-cards{flex:0 0 auto;max-height:none;margin-top:0;align-items:stretch;}
+#screen-setup .team-card{padding:14px 10px 10px;gap:12px;align-items:center;justify-content:flex-start;border-top-width:3px;}
+#screen-setup .team-card.a{border-top-color:#A855FF;}
+#screen-setup .team-card.b{border-top-color:var(--gold);}
+.team-pick{position:relative;padding:0;background:none;border:none;width:clamp(84px,17dvh,124px);aspect-ratio:1;flex:0 0 auto;transition:transform .12s;}
+.team-pick:active{transform:scale(.95);}
+#screen-setup .team-pick .team-badge{display:block;width:100%;height:100%;aspect-ratio:auto;}
+.pick-pencil{position:absolute;right:-7px;bottom:-7px;z-index:3;width:30px;height:30px;border-radius:50%;
+  background:var(--gold);color:#1a0b2e;display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--bg);box-shadow:0 3px 8px rgba(0,0,0,.4);}
+.pick-pencil svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+#screen-setup .team-card input[type=text]{width:100%;text-align:center;}
+
+/* Avatar provisional (emoji) cuando aún no existe la imagen */
+.av-fb{container-type:inline-size;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:linear-gradient(145deg,#4a1aa0,var(--purple-primary));border-radius:14px;}
+.av-emoji{font-size:54cqw;line-height:1;}
+
+/* Selector de avatares */
+.av-sheet{height:min(100%,660px);}
+.av-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:14px;padding-bottom:4px;}
+.av-pack h4{margin:0 0 6px;padding:0 2px;font-size:.92rem;font-weight:800;color:var(--text);}
+.av-row{display:flex;gap:10px;overflow-x:auto;padding:5px 3px 8px;scroll-snap-type:x proximity;scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.25) transparent;overscroll-behavior-x:contain;}
+.av-opt{flex:0 0 74px;width:74px;height:74px;position:relative;padding:0;border-radius:16px;overflow:hidden;
+  background:rgba(255,255,255,.06);border:2px solid transparent;scroll-snap-align:start;transition:transform .12s,border-color .12s;}
+.av-opt .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.av-opt:not(:disabled):active{transform:scale(.93);}
+.av-opt.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,215,0,.3);}
+.av-opt:disabled{opacity:.22;cursor:not-allowed;}
+#screen-setup .av-fb,.av-opt.av-fb{background:linear-gradient(145deg,#4a1aa0,var(--purple-primary));border-radius:16px;overflow:hidden;}
+#screen-setup .team-card.b .team-badge.av-fb{background:linear-gradient(145deg,#8a6d00,var(--gold-soft));}
+#screen-setup .team-pick .team-badge.av-fb{display:flex;align-items:center;justify-content:center;}
+
+/* ===== v6: letras por defecto, botón Editar, selector a pantalla completa ===== */
+.av-fb.av-letter{border-radius:18px;}
+.av-fb.av-letter .av-emoji{font-size:62cqw;font-weight:900;letter-spacing:-.02em;color:#fff;}
+.av-letter-a{background:linear-gradient(145deg,#4a1aa0,var(--purple-primary));}
+.av-letter-b{background:linear-gradient(145deg,#8a6d00,var(--gold));}
+.av-letter-b .av-emoji{color:#1a0b2e !important;}
+#screen-setup .team-badge.av-letter-a{background:linear-gradient(145deg,#4a1aa0,var(--purple-primary));}
+#screen-setup .team-badge.av-letter-b{background:linear-gradient(145deg,#8a6d00,var(--gold));}
+.team-badge.av-letter{box-shadow:0 8px 22px rgba(0,0,0,.35);}
+.team-badge.av-letter::before{display:none;}
+
+.pick-pencil{left:50%;right:auto;bottom:-13px;transform:translateX(-50%);width:auto;height:26px;padding:0 11px 0 9px;
+  border-radius:13px;gap:5px;font-size:.72rem;font-weight:800;letter-spacing:.2px;white-space:nowrap;}
+.pick-pencil svg{width:13px;height:13px;}
+#screen-setup .team-card{padding-bottom:16px;gap:20px;}
+#screen-setup .team-card input[type=text]{
+  border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(0,0,0,.22);
+  padding:9px 8px;font-size:.88rem;font-weight:700;}
+#screen-setup .team-card input[type=text]:focus{outline:none;border-color:var(--gold);}
+
+/* Selector de avatares: pantalla completa dentro del marco del móvil */
+#avModal{padding:0;background:var(--bg);align-items:stretch;justify-content:stretch;z-index:60;}
+#avModal .rules-sheet.av-sheet{width:100%;height:100%;max-height:none;border:none;border-radius:0;box-shadow:none;background:transparent;
+  gap:10px;padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(14px + env(safe-area-inset-bottom,0px));}
+.av-top{display:flex;align-items:center;gap:14px;flex:0 0 auto;}
+.av-preview{width:76px;height:76px;flex:0 0 76px;position:relative;border-radius:18px;display:block;overflow:hidden;
+  border:2px solid var(--gold);box-shadow:0 6px 18px rgba(0,0,0,.4);}
+.av-preview .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.av-top-text{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.av-top-text h3{margin:0;font-size:1.25rem;font-weight:900;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.av-top-text small{color:var(--text-dim);font-size:.8rem;}
+#avModal .av-body{gap:18px;padding:4px 0 8px;}
+#avModal .av-pack h4{font-size:1rem;margin-bottom:8px;}
+#avModal .av-opt{flex:0 0 clamp(76px,23vw,96px);width:clamp(76px,23vw,96px);height:auto;aspect-ratio:1;border-radius:18px;}
+.av-foot{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding-top:10px;border-top:1px solid rgba(255,255,255,.1);}
+.av-foot .btn-ghost{flex:0 0 auto;width:auto;min-width:112px;padding:12px 20px;}
+.av-foot .btn-primary{flex:0 0 auto;width:auto;min-width:132px;padding:12px 22px;}
+.av-preview.av-fb{display:flex;align-items:center;justify-content:center;}
+
+/* ===== v7: logo arriba, equipos centrados en el hueco y más grandes, reglas + empezar abajo ===== */
+#screen-setup{padding-top:clamp(2px,1.2dvh,12px);}
+.setup-hero{flex:0 0 auto;justify-content:flex-start;gap:6px;}
+#screen-setup .setup-bottom{flex:1 1 auto;min-height:0;gap:10px;}
+#screen-setup .team-cards{flex:1 1 auto;min-height:0;align-content:center;margin:0 0 6px;}
+.team-pick{width:min(86%,clamp(84px,23dvh,168px));}
+#screen-setup .team-card{padding:18px 10px 18px;gap:24px;}
+@media (max-height:640px){
+  #screen-setup .team-card{padding:12px 8px 14px;gap:20px;}
+  .team-pick{width:min(80%,clamp(60px,20dvh,120px));}
+}
+
+/* Avatares PNG con bordes transparentes: fondo blanco con las mismas esquinas redondeadas */
+.avatar-img{background:#fff;}
+
+/* ===== v8: equipos en dos filas (avatar grande + nombre), sin recuadros ===== */
+#screen-setup .team-cards{
+  display:flex;flex-direction:column;align-items:stretch;justify-content:space-evenly;
+  flex:1 1 auto;min-height:0;max-height:none;gap:0;margin:0 0 6px;
+}
+#screen-setup .team-card,#screen-setup .team-card.a,#screen-setup .team-card.b{
+  --tc:#A855FF;
+  --av-size:clamp(92px,min(34vw,24dvh),172px);
+  display:flex;flex-direction:row;align-items:center;justify-content:flex-start;
+  gap:clamp(14px,4.5vw,22px);
+  background:none;border:none;border-radius:0;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  padding:0 2px 14px;
+}
+#screen-setup .team-card.b{--tc:var(--gold);}
+@media (max-height:600px){
+  #screen-setup .team-card,#screen-setup .team-card.a,#screen-setup .team-card.b{--av-size:clamp(64px,min(26vw,17dvh),104px);padding-bottom:12px;}
+}
+
+#screen-setup .team-pick{width:var(--av-size);height:var(--av-size);flex:0 0 auto;}
+#screen-setup .team-pick .team-badge{
+  display:block;width:100%;height:100%;border-radius:22px;overflow:hidden;
+  box-shadow:0 0 0 3px var(--tc),0 10px 24px rgba(0,0,0,.4);
+}
+#screen-setup .team-pick .team-badge.av-fb{display:flex;}
+#screen-setup .team-badge::before{display:none;}
+#screen-setup .team-badge .avatar-img{border-radius:0;}
+
+.team-fields{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:7px;padding-bottom:6px;}
+.team-tag{font-size:.85rem;font-weight:800;color:var(--tc);padding-left:2px;}
+#screen-setup .team-card input[type=text]{
+  width:100%;text-align:left;font-size:1.1rem;font-weight:800;padding:12px 14px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:14px;
+}
+#screen-setup .team-card input[type=text]:focus{outline:none;border-color:var(--tc);box-shadow:0 0 0 3px rgba(255,255,255,.08);}
+
+#screen-setup .team-cards .vs{
+  display:flex;align-items:center;align-self:stretch;gap:12px;width:100%;height:auto;aspect-ratio:auto;
+  margin:0;padding:0;position:static;
+  background:none;border:none;border-radius:0;box-shadow:none;overflow:visible;
+  color:var(--gold);font-size:.85rem;font-weight:900;letter-spacing:.06em;
+}
+#screen-setup .team-cards .vs::before,#screen-setup .team-cards .vs::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.16);}
+</style>
+</head>
+<body>
+
+<div class="turn-overlay" id="turnOverlay">
+  <div class="to-badge" id="toBadge"></div>
+  <div class="to-name" id="toName">Equipo A</div>
+  <div class="to-sub" id="toSub">Tu turno</div>
+</div>
+
+<div class="phone-frame">
+
+  <!-- SCOREBOARD -->
+  <div class="scoreboard" id="scoreboard" style="display:none;">
+    <div class="sb-top">
+      <div class="team-box a">
+        <span class="sb-avatar" id="sbAvatarA"></span>
+        <div class="sb-info"><h2 id="sbNameA">Equipo A</h2><div class="pts" id="sbScoreA">0</div></div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-box b">
+        <div class="sb-info"><h2 id="sbNameB">Equipo B</h2><div class="pts" id="sbScoreB">0</div></div>
+        <span class="sb-avatar" id="sbAvatarB"></span>
+      </div>
+    </div>
+    <div class="round-track" id="roundTrack"></div>
+    <div class="sb-turn" id="sbTurn" style="display:none;"></div>
+  </div>
+
+  <!-- SETUP -->
+  <div class="screen active" id="screen-setup">
+    <div class="setup-hero">
+      <img class="game-logo" id="gameLogo" src="Resources/logo.png" alt="100-R">
+      <p class="tagline"><b>100-R</b><span>:</span> ¿Quién sabe más?</p>
+    </div>
+    <div class="setup-bottom">
+      <div class="team-cards">
+        <div class="team-card a">
+        <button type="button" class="team-pick" id="pickA" aria-label="Cambiar avatar del equipo A">
+          <span class="team-badge" id="badgeA"></span>
+          <span class="pick-pencil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Editar</span>
+        </button>
+        <div class="team-fields">
+          <label class="team-tag" for="inputTeamA">Equipo A</label>
+          <input type="text" id="inputTeamA" placeholder="Nombre del equipo" maxlength="14" autocomplete="off">
+        </div>
+      </div>
+        <div class="vs">VS</div>
+        <div class="team-card b">
+        <button type="button" class="team-pick" id="pickB" aria-label="Cambiar avatar del equipo B">
+          <span class="team-badge" id="badgeB"></span>
+          <span class="pick-pencil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Editar</span>
+        </button>
+        <div class="team-fields">
+          <label class="team-tag" for="inputTeamB">Equipo B</label>
+          <input type="text" id="inputTeamB" placeholder="Nombre del equipo" maxlength="14" autocomplete="off">
+        </div>
+      </div>
+      </div>
+      <button class="btn-rules" id="btnRules" type="button">
+      <span class="br-icon"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
+      <span class="br-text"><b>Reglas del juego</b><small>Aprende cómo se juega</small></span>
+      <span class="br-arrow"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+    </button>
+      <button class="btn-primary" id="btnStart" disabled>Cargando preguntas…</button>
+    </div>
+    <div class="rules-modal" id="rulesModal">
+      <div class="rules-sheet">
+        <div class="rs-head"><h3><span class="rs-ic"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>Reglas del juego</h3><button class="rs-x" id="btnCloseRulesX" type="button" aria-label="Cerrar"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+        <div class="rs-pages" id="rsPages">
+          <div class="rs-page active">
+            <div class="rs-page-title">1 · Cómo se juega</div>
+            <div class="rules-box"><ul>
+              <li><span class="rule-tile">5/10</span><span class="rule-text"><b>Elige tus categorías</b>Cada equipo recibe 10 categorías distintas a las del rival y se queda con 5.</span></li>
+              <li><span class="rule-tile">10</span><span class="rule-text"><b>Turnos alternos</b>Con las 10 categorías elegidas entre los dos, os vais turnando: elegís una pregunta y respondéis.</span></li>
+              <li><span class="rule-tile ic"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6M12 20V4M19 20v-10"/></svg></span><span class="rule-text"><b>Suma de puntos por ronda</b>En cada ronda se suman los puntos de las respuestas acertadas. El equipo con más puntos gana la ronda.</span></li>
+              <li><span class="rule-tile trophy"><img src="Resources/trofeo.png" alt="" onerror="this.replaceWith(document.createTextNode('🏆'))"></span><span class="rule-text"><b>Gana quien llegue a 5 rondas</b>El primer equipo que gane 5 rondas se lleva la partida y es el campeón.</span></li>
+            </ul></div>
+          </div>
+          <div class="rs-page">
+            <div class="rs-page-title">2 · Cómo es el juego</div>
+            <div class="rules-box"><ul>
+              <li><span class="rule-tile">1-6</span><span class="rule-text"><b>Puntos por dificultad</b>Acertar suma de 1 a 6 puntos según el nivel de la pregunta:
+                <span class="lvl-row">
+                  <span class="diff-chip diff-VERY_EASY">MUY FÁCIL · 1</span>
+                  <span class="diff-chip diff-EASY">FÁCIL · 2</span>
+                  <span class="diff-chip diff-MEDIUM">MEDIO · 3</span>
+                  <span class="diff-chip diff-DIFFICULT">DIFÍCIL · 4</span>
+                  <span class="diff-chip diff-VERY_DIFFICULT">MUY DIFÍCIL · 5</span>
+                  <span class="diff-chip diff-IMPOSSIBLE">IMPOSIBLE · 6</span>
+                </span></span></li>
+              <li><span class="rule-tile ic"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="rule-text"><b>La dificultad depende de la categoría</b><span>El nivel es lo difícil que resulta <u>para alguien que conoce esa categoría</u>, no en general.</span></span></li>
+              <li><span class="rule-tile ic"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></span><span class="rule-text"><b>Categorías muy concretas</b><span>Nada de temas generales: algo muy específico, como un artista, un personaje, un equipo o una obra.</span>
+                <span class="spec-list"><span class="spec-row"><s>Música</s><svg class="spec-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b>Queen</b></span><span class="spec-row"><s>Deporte</s><svg class="spec-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b>Tour de Francia</b></span><span class="spec-row"><s>Ciencia</s><svg class="spec-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b>Marie Curie</b></span></span></span></li>
+            </ul></div>
+          </div>
+        </div>
+        <div class="rs-dots" id="rsDots"></div>
+        <div class="rs-nav">
+          <button class="btn-ghost" id="btnRulesPrev" type="button">Atrás</button>
+          <button class="btn-primary" id="btnRulesNext" type="button">Siguiente</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="rules-modal" id="avModal">
+      <div class="rules-sheet av-sheet">
+        <div class="av-top">
+          <span class="av-preview" id="avPreview"></span>
+          <div class="av-top-text"><h3 id="avTitle">Elige tu avatar</h3><small>Toca uno para probarlo</small></div>
+        </div>
+        <div class="av-body" id="avBody"></div>
+        <div class="av-foot">
+          <button class="btn-ghost" id="btnCancelAv" type="button">Cancelar</button>
+          <button class="btn-primary" id="btnApplyAv" type="button">Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELECCIÓN DE CATEGORÍAS (cada equipo, con SUS 10 categorías) -->
+  <div class="screen" id="screen-selection">
+    <div class="board-info" id="selInfo"></div>
+    <div class="qwrap"><div class="qlist" id="qlist"></div></div>
+    <button class="btn-primary" id="btnConfirmSelection" disabled>Confirmar selección</button>
+  </div>
+
+  <!-- PLAY (TABLERO DE 10 PREGUNTAS, ORDEN LIBRE) -->
+  <div class="screen" id="screen-play">
+    <div class="board-info" id="playBoardInfo"></div>
+    <div class="pool-grid" id="boardGrid"></div>
+
+    <div class="play-card" id="playCard" style="display:none;">
+      <div class="play-header">
+        <div class="ph-main">
+          <div class="ph-cat" id="playCategory">Categoría</div>
+          <span class="diff-chip diff-MEDIUM" id="playDiff">MEDIO</span>
+        </div>
+        <span class="pt-box lg diff-MEDIUM" id="playPts">1</span>
+      </div>
+      <div class="q-image" id="playImage"><img id="playImg" alt=""></div>
+      <div class="q-text" id="playText">¿Pregunta?</div>
+      <div class="options" id="playOptions"></div>
+      <div class="feedback" id="playFeedback"></div>
+      <div class="info-line" id="playInfo"></div>
+      <button class="btn-primary" id="btnContinue" style="visibility:hidden;">Continuar</button>
+    </div>
+  </div>
+
+  <!-- ROUND RESULT -->
+  <div class="screen" id="screen-round-result">
+    <div class="board-info"><span id="rrRound">Ronda 1</span><button class="rr-skip" id="btnSkip">Saltar</button></div>
+    <div class="rr-list" id="roundResultList"></div>
+    <div class="rr-winner" id="rrWinner" style="display:none;">
+      <div class="rr-w-avatar" id="rrWAvatar"></div>
+      <div class="rr-w-title" id="roundResultTitle"></div>
+      <div class="rr-w-score" id="roundResultScore"></div>
+    </div>
+    <button class="btn-primary" id="btnNextRound" style="display:none;">Siguiente ronda</button>
+  </div>
+
+  <!-- MATCH RESULT -->
+  <div class="screen" id="screen-match-result">
+    <div class="big-result">
+      <h2 id="matchResultTitle">🏆 ¡Equipo A gana la partida!</h2>
+      <div class="score-line" id="matchResultScore">5 rondas a 2</div>
+    </div>
+    <button class="btn-primary" id="btnRestart">Jugar otra partida</button>
+  </div>
+
+</div>
+
+<script src="preguntas.js"></script>
+<script>
+/* ====== DATOS ======
+   Las preguntas se cargan desde ../data/questions.json.
+   Si modificas ese archivo (añadir/editar preguntas, categorías, dificultades),
+   no hace falta tocar nada de este archivo. */
+/* ====== DATOS ======
+   Las preguntas se cargan desde el archivo externo preguntas.js.
+   Puedes modificar preguntas.js sin tocar el código del juego.
+*/
+
+/* ====== CONSTANTES ====== */
+async function loadQuestions(){
+  if (!Array.isArray(QUESTIONS) || QUESTIONS.length === 0){
+    throw new Error('El archivo preguntas.js no contiene preguntas válidas.');
+  }
+  QUESTIONS.forEach((q, i) => { q.uid = i; });
+}
+
+const ROUNDS_TO_WIN = 5;
+const DECK_SIZE = 10;          // preguntas por mazo propio
+const DECK_TARGET_POINTS = 25; // suma de puntos que debe tener cada mazo
+const KEEP_COUNT = 5;          // cuántas se queda cada equipo de su propio mazo
+
+// Dificultades permitidas para los mazos (se excluye IMPOSSIBLE a propósito)
+const POINTS_TO_DIFFICULTY = {1:'VERY_EASY', 2:'EASY', 3:'MEDIUM', 4:'DIFFICULT', 5:'VERY_DIFFICULT'};
+const DIFF_LABEL = {
+  VERY_EASY:'MUY FÁCIL', EASY:'FÁCIL', MEDIUM:'MEDIO',
+  DIFFICULT:'DIFÍCIL', VERY_DIFFICULT:'MUY DIFÍCIL', IMPOSSIBLE:'IMPOSIBLE'
+};
+
+/* ====== ESTADO ====== */
+let state = null;
+
+function freshState(teamA, teamB, avatarA, avatarB){
+  return {
+    teamA, teamB, avatarA, avatarB,
+    roundsWonA: 0, roundsWonB: 0,
+    roundNum: 0,
+    starter: 'A',        // qué equipo arma/selecciona primero esta ronda
+    usedIds: new Set(),  // preguntas ya usadas en toda la partida (no se repiten)
+    picks: { A:{deck:[], chosen:new Set()}, B:{deck:[], chosen:new Set()} },
+    selecting: 'A',
+    pool: [],
+    activeTeam: 'A', currentItem: null,
+    scoreA: 0, scoreB: 0,
+    resultsLog: []
+  };
+}
+
+function $(id){ return document.getElementById(id); }
+function esc(t){ return String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ptsInner(n){ return '<b>' + n + '</b><small>' + (n === 1 ? 'pt' : 'pts') + '</small>'; }
+function setTurn(team){
+  const el = $('sbTurn');
+  el.textContent = 'TURNO ' + teamName(team).toUpperCase();
+  el.style.display = 'block';
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
+function showScreen(id){
+  if (id !== 'screen-play' && id !== 'screen-selection') $('sbTurn').style.display = 'none';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+/* ====== IMÁGENES POR CATEGORÍA ======
+   Orden de prioridad para elegir la imagen de una pregunta:
+   1) Si la pregunta en preguntas.js tiene un campo  image: "..."  -> se usa ese.
+   2) Si la categoría tiene imagen en CATEGORY_IMAGES (preguntas.js, la que pones en el editor) o en IMAGENES_MANUALES -> se usa esa.
+   3) Si no, se busca automáticamente en Wikipedia (necesita internet): la imagen principal del artículo.
+   Si no se encuentra nada (o no hay internet), simplemente no se muestra imagen. */
+const IMAGENES_MANUALES = {
+  // Ejemplos (quita las // para usarlos). Las imágenes van en una carpeta "imagenes"
+  // junto a este archivo, o puedes poner una URL completa:
+  // "Brad Pitt": "imagenes/brad-pitt.jpg",
+  // "Pokémon":   "imagenes/pokemon.png",
+};
+const WIKI_TITULOS = {
+  // Si la búsqueda automática da una imagen equivocada, indica qué artículo
+  // de Wikipedia usar para esa categoría:
+  // "Fonts": "Tipografía",
+};
+
+const IMG_CACHE_KEY = 'duelo_img_cache_v3';
+const imgCache = (() => { try { return JSON.parse(localStorage.getItem(IMG_CACHE_KEY)) || {}; } catch(e){ return {}; } })();
+const imgPending = {};
+function saveImgCache(){ try { localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(imgCache)); } catch(e){} }
+
+async function wikiQuery(params){
+  const url = 'https://es.wikipedia.org/w/api.php?action=query&format=json&origin=*' +
+    '&prop=pageimages&piprop=thumbnail&pithumbsize=600&' + params;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return (data.query && data.query.pages) ? Object.values(data.query.pages) : [];
+}
+
+async function fetchWikiImage(category){
+  const title = WIKI_TITULOS[category] || category;
+  // 1) artículo con ese título exacto (sigue redirecciones)
+  let pages = await wikiQuery('redirects=1&titles=' + encodeURIComponent(title));
+  let hit = pages.find(p => p.thumbnail);
+  // 2) si no tiene imagen, primer resultado de búsqueda que la tenga
+  if (!hit){
+    pages = await wikiQuery('generator=search&gsrlimit=5&gsrsearch=' + encodeURIComponent(title));
+    pages.sort((a, b) => (a.index || 0) - (b.index || 0));
+    hit = pages.find(p => p.thumbnail);
+  }
+  return hit ? hit.thumbnail.source : null;
+}
+
+function getCategoryImage(category){
+  if (typeof CATEGORY_IMAGES !== 'undefined' && CATEGORY_IMAGES[category]) return Promise.resolve(CATEGORY_IMAGES[category]);
+  if (IMAGENES_MANUALES[category]) return Promise.resolve(IMAGENES_MANUALES[category]);
+  if (category in imgCache) return Promise.resolve(imgCache[category]);
+  if (imgPending[category]) return imgPending[category];
+  imgPending[category] = fetchWikiImage(category)
+    .then(url => { imgCache[category] = url; saveImgCache(); return url; })
+    .catch(() => null)                       // sin internet o error: no se guarda, se reintentará
+    .finally(() => { delete imgPending[category]; });
+  return imgPending[category];
+}
+
+/* ====== IMÁGENES CON TRANSPARENCIA ======
+   Si la imagen tiene zonas transparentes, se muestra entera (sin recortar) sobre fondo blanco.
+   Si no las tiene, se sigue ajustando como siempre (rellenando el cuadro).
+   Para saberlo se leen los píxeles; si el navegador no lo permite (imagen de otra web sin permiso o
+   archivo local), se decide por el formato: PNG, WebP, GIF, SVG y AVIF pueden ser transparentes; JPG nunca. */
+const transpCache = {};
+function imgLooksTransparent(src){
+  src = String(src);
+  if (src in transpCache) return Promise.resolve(transpCache[src]);
+  const path = src.split(/[?#]/)[0];
+  if (/\.(jpe?g|jfif|bmp)$/i.test(path) || /^data:image\/jpe?g/i.test(src)){ transpCache[src] = false; return Promise.resolve(false); }
+  const maybe = /\.(png|webp|gif|svg|avif)$/i.test(path) || /^data:image\/(png|webp|gif|svg|avif)/i.test(src);
+  return new Promise(res => {
+    const done = v => { transpCache[src] = v; res(v); };
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => {
+      try {
+        const k = Math.min(1, 96 / Math.max(im.naturalWidth, im.naturalHeight, 1));
+        const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d'); ctx.drawImage(im, 0, 0, w, h);
+        const d = ctx.getImageData(0, 0, w, h).data;
+        let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] < 200) n++;
+        done(n / (w * h) >= 0.01);
+      } catch(e){ done(maybe); }
+    };
+    im.onerror = () => done(maybe);
+    im.src = src;
+  });
+}
+function fitImage(img, src){
+  img.classList.remove('img-transp');
+  img._fit = src;
+  imgLooksTransparent(src).then(t => { if (img._fit === src) img.classList.toggle('img-transp', t); });
+}
+
+function imageFor(q){
+  return q.image ? Promise.resolve(q.image) : getCategoryImage(q.category);
+}
+
+/* ====== GENERACIÓN DE MAZOS (10 preguntas, suma = 25 puntos) ====== */
+
+// Reparte 25 puntos entre 10 preguntas, cada una entre 1 y 5 puntos.
+function randomPointDistribution(){
+  const levels = new Array(DECK_SIZE).fill(1);
+  let remaining = DECK_TARGET_POINTS - DECK_SIZE; // 15
+  while (remaining > 0){
+    const candidates = levels.map((v,i)=>i).filter(i => levels[i] < 5);
+    if (candidates.length === 0) break; // no debería pasar (máx posible = 50)
+    const idx = candidates[Math.floor(Math.random()*candidates.length)];
+    levels[idx]++;
+    remaining--;
+  }
+  return levels; // ej: [1,3,2,5,1,4,2,3,2,2] -> suma 25
+}
+
+// Construye UN intento de mazo de 10 preguntas.
+function buildDeckOnce(excludeIds, avoidCats = []){
+  const levels = randomPointDistribution();
+  const deck = [];
+  const usedCategoriesInDeck = new Set();
+  const localExclude = new Set(excludeIds);
+  const avoid = new Set(avoidCats);
+
+  for (const points of levels){
+    const difficulty = POINTS_TO_DIFFICULTY[points];
+    let pool = QUESTIONS.filter(q =>
+      q.difficulty === difficulty &&
+      !localExclude.has(q.uid) &&
+      !usedCategoriesInDeck.has(q.category) &&
+      !avoid.has(q.category)
+    );
+    if (pool.length === 0){
+      pool = QUESTIONS.filter(q =>
+        q.difficulty === difficulty &&
+        !localExclude.has(q.uid) &&
+        !usedCategoriesInDeck.has(q.category)
+      );
+    }
+    if (pool.length === 0){
+      pool = QUESTIONS.filter(q => q.difficulty === difficulty && !localExclude.has(q.uid));
+    }
+    if (pool.length === 0){
+      pool = QUESTIONS.filter(q => !localExclude.has(q.uid));
+    }
+    if (pool.length === 0) continue;
+
+    const chosen = pool[Math.floor(Math.random()*pool.length)];
+    deck.push(chosen);
+    usedCategoriesInDeck.add(chosen.category);
+    localExclude.add(chosen.uid);
+  }
+  return deck;
+}
+
+// Puntúa un mazo: 0 = perfecto (10 preguntas, categorías distintas entre sí
+// y ninguna categoría de avoidCats). Cuanto mayor, peor.
+function deckPenalty(deck, avoidCats){
+  const avoid = new Set(avoidCats);
+  const seen = new Set();
+  let penalty = (DECK_SIZE - deck.length) * 10;
+  deck.forEach(q => {
+    if (seen.has(q.category)) penalty++;
+    seen.add(q.category);
+    if (avoid.has(q.category)) penalty++;
+  });
+  return penalty;
+}
+
+// Reintenta varias veces hasta conseguir un mazo con 10 categorías distintas
+// y sin ninguna de las categorías de avoidCats (las del mazo del otro equipo).
+function buildDeck(excludeIds, avoidCats = []){
+  let best = null, bestPenalty = Infinity;
+  for (let attempt = 0; attempt < 300; attempt++){
+    const deck = buildDeckOnce(excludeIds, avoidCats);
+    const pen = deckPenalty(deck, avoidCats);
+    if (pen < bestPenalty){ best = deck; bestPenalty = pen; }
+    if (pen === 0) break;
+  }
+  return best;
+}
+
+/* ====== MARCADOR ====== */
+function updateScoreboard(){
+  $('scoreboard').style.display = 'flex';
+  $('sbNameA').textContent = state.teamA;
+  $('sbNameB').textContent = state.teamB;
+  setAvatar($('sbAvatarA'), teamAvatar('A'));
+  setAvatar($('sbAvatarB'), teamAvatar('B'));
+  $('sbScoreA').textContent = state.scoreA;
+  $('sbScoreB').textContent = state.scoreB;
+  renderRoundTrack();
+}
+
+/* Camino de 9 casillas: A rellena de izquierda a derecha, B de derecha a izquierda.
+   La casilla central (🏆) la rellena quien llega a ROUNDS_TO_WIN rondas. */
+function renderRoundTrack(){
+  const track = $('roundTrack');
+  const total = ROUNDS_TO_WIN * 2 - 1;   // 9
+  const mid = ROUNDS_TO_WIN - 1;          // índice 4
+  if (track.children.length !== total){
+    track.innerHTML = '';
+    track.style.gridTemplateColumns = 'repeat(' + total + ',1fr)';
+    for (let i = 0; i < total; i++){
+      const c = document.createElement('div');
+      c.className = 'rt-cell' + (i === mid ? ' final' : '');
+      if (i === mid){
+        const img = document.createElement('img');
+        img.className = 'rt-trophy';
+        img.alt = '';
+        img.onerror = () => { img.remove(); c.textContent = '🏆'; };   // si no existe trofeo.png
+        img.src = RES_DIR + 'trofeo.png';
+        c.appendChild(img);
+      }
+      track.appendChild(c);
+    }
+  }
+  const prevA = Number(track.dataset.a || 0), prevB = Number(track.dataset.b || 0);
+  const a = Math.min(state.roundsWonA, ROUNDS_TO_WIN);
+  const b = Math.min(state.roundsWonB, ROUNDS_TO_WIN);
+  // Si empieza una partida nueva, no animar
+  const reset = a < prevA || b < prevB;
+  [...track.children].forEach((c, i) => {
+    const filledA = i < a;                    // 0..a-1
+    const filledB = i > total - 1 - b;        // desde la derecha
+    const wasA = i < prevA, wasB = i > total - 1 - prevB;
+    c.classList.toggle('win-a', filledA);
+    c.classList.toggle('win-b', filledB && !filledA);
+    c.classList.remove('fill-pop');
+    if (!reset && ((filledA && !wasA) || (filledB && !wasB))){
+      void c.offsetWidth;
+      c.classList.add('fill-pop');
+    }
+  });
+  track.dataset.a = a; track.dataset.b = b;
+}
+
+function teamName(letter){ return letter === 'A' ? state.teamA : state.teamB; }
+function teamAvatar(letter){ return (letter === 'A' ? state.avatarA : state.avatarB) || ('letter:' + letter); }
+
+/* ====== AVATARES ======
+   Cada pack es una "fila" del selector (como los avatares de Netflix).
+   Las imágenes van en Resources/avatares/ :
+     - Clásicos:  1.png, 2.png, 3.png ...
+     - Resto:     deportes1.png, deportes2.png ... / cine1.png ... / videojuegos1.png ... / musica1.png ... / animales1.png ...
+                  animacion1.png ... / ciencia1.png ... / historia1.png ... / arte1.png ... / literatura1.png ... / otros1.png ...
+   El selector comprueba qué imágenes existen (empieza en 1 y tolera huecos de hasta AVATAR_MAX_GAP seguidas) y solo muestra las disponibles.
+   Mientras comprueba, por defecto se ven la 1 y la 2. Si un pack no tiene ninguna imagen, no aparece.
+   Para añadir un pack nuevo: añade otro bloque a esta lista. */
+const RES_DIR = 'Resources/';
+const AVATAR_DIR = RES_DIR + 'avatares/';
+const AVATAR_DEFAULT_COUNT = 2;
+const AVATAR_PACKS = [
+  { id:'clasicos',    name:'Clásicos',      dir:AVATAR_DIR, prefix:'' },
+  { id:'ciencia',     name:'Ciencia',       dir:AVATAR_DIR, prefix:'ciencia' },
+  { id:'historia',    name:'Historia',      dir:AVATAR_DIR, prefix:'historia' },
+  { id:'literatura',  name:'Literatura',    dir:AVATAR_DIR, prefix:'literatura' },
+  { id:'arte',        name:'Arte',          dir:AVATAR_DIR, prefix:'arte' },
+  { id:'musica',      name:'Música',        dir:AVATAR_DIR, prefix:'musica' },
+  { id:'cine',        name:'Cine',          dir:AVATAR_DIR, prefix:'cine' },
+  { id:'deportes',    name:'Deportes',      dir:AVATAR_DIR, prefix:'deportes' },
+  { id:'videojuegos', name:'Videojuegos',   dir:AVATAR_DIR, prefix:'videojuegos' },
+  { id:'animacion',   name:'Animación',     dir:AVATAR_DIR, prefix:'animacion' },
+  { id:'animales',    name:'Animales',      dir:AVATAR_DIR, prefix:'animales' },
+  { id:'otros',       name:'Otros',         dir:AVATAR_DIR, prefix:'otros' }
+];
+
+// Un avatar se identifica como "pack:número" (p. ej. "deportes:3"). Un número suelto = pack Clásicos.
+function avatarInfo(id){
+  let packId = 'clasicos', n = parseInt(id, 10);
+  if (typeof id === 'string' && id.includes(':')){ const [p, k] = id.split(':'); packId = p; n = parseInt(k, 10); }
+  const pack = AVATAR_PACKS.find(x => x.id === packId) || AVATAR_PACKS[0];
+  return { pack, n, src: pack.dir + pack.prefix + n + '.png', emoji: '' };
+}
+
+// Cuántas imágenes tiene un pack (se comprueba una vez y se guarda)
+function probeImage(src){
+  return new Promise(res => { const i = new Image(); i.onload = () => res(true); i.onerror = () => res(false); i.src = src; });
+}
+// Tolera huecos: sigue buscando hasta AVATAR_MAX_GAP imágenes seguidas que falten
+const AVATAR_MAX_GAP = 5;
+async function detectPack(pack){
+  if (pack._list) return pack._list;
+  if (pack._p) return pack._p;
+  pack._p = (async () => {
+    const list = [];
+    let miss = 0;
+    for (let n = 1; n <= 300 && miss < AVATAR_MAX_GAP; n++){
+      if (await probeImage(pack.dir + pack.prefix + n + '.png')){ list.push(n); miss = 0; }
+      else miss++;
+    }
+    pack._list = list;
+    return list;
+  })();
+  return pack._p;
+}
+
+function setAvatar(el, id){
+  if (typeof id === 'string' && id.startsWith('letter:')){   // sin avatar elegido: solo la letra del equipo
+    const L = id.slice(7);
+    el.innerHTML = '';
+    el.classList.remove('av-fb'); el.classList.add('av-fb', 'av-letter', 'av-letter-' + L.toLowerCase());
+    el.style.removeProperty('--av');
+    const sp = document.createElement('span');
+    sp.className = 'av-emoji'; sp.textContent = L;
+    el.appendChild(sp);
+    return;
+  }
+  el.classList.remove('av-letter', 'av-letter-a', 'av-letter-b');
+  const info = avatarInfo(id);
+  el.innerHTML = '';
+  el.classList.remove('av-fb');
+  const img = document.createElement('img');
+  img.className = 'avatar-img';
+  img.alt = '';
+  img.onerror = () => {
+    el.innerHTML = '';
+    el.classList.add('av-fb');
+    const sp = document.createElement('span');
+    sp.className = 'av-emoji';
+    sp.textContent = info.emoji;
+    el.appendChild(sp);
+  };
+  img.src = info.src;
+  el.style.setProperty('--av', 'url("' + info.src + '")');
+  el.appendChild(img);
+}
+
+/* Transición: muestra icono + nombre del equipo, cambia de pantalla a mitad y se desvanece */
+function showTurnOverlay(team, subtitle, action){
+  const ov = $('turnOverlay');
+  setAvatar($('toBadge'), teamAvatar(team));
+  $('toName').textContent = teamName(team);
+  $('toSub').textContent = subtitle;
+  ov.classList.remove('show','a','b');
+  void ov.offsetWidth;
+  ov.classList.add(team.toLowerCase());
+  ov.classList.add('show');
+  setTimeout(action, 350);
+  setTimeout(() => ov.classList.remove('show'), 1500);
+}
+function rivalOf(letter){ return letter === 'A' ? 'B' : 'A'; }
+
+/* ====== FLUJO DE RONDA + SELECCIÓN DE CATEGORÍAS ======
+   Cada equipo recibe SU PROPIO mazo de 10 categorías, generado justo cuando
+   le toca elegir. El mazo del segundo equipo excluye las preguntas y
+   categorías del primero. La selección (chosen) es independiente por equipo. */
+function startRound(){
+  state.roundNum++;
+  state.scoreA = 0; state.scoreB = 0;
+  state.resultsLog = [];
+  state.picks = { A:{deck:[], chosen:new Set()}, B:{deck:[], chosen:new Set()} };
+  updateScoreboard();
+  beginSelectionFor(state.starter);
+}
+
+function beginSelectionFor(team){
+  state.selecting = team;
+  const mine = state.picks[team];
+  const theirs = state.picks[rivalOf(team)];
+
+  const excluded = new Set(state.usedIds);
+  theirs.deck.forEach(q => excluded.add(q.uid));
+  mine.deck = buildDeck(excluded, theirs.deck.map(q => q.category));
+  mine.chosen = new Set();
+
+  showTurnOverlay(team, 'Elige tus 5 categorías', () => {
+    renderSelection();
+    showScreen('screen-selection');
+    window.scrollTo(0, 0);
+  });
+}
+
+function renderSelection(){
+  const team = state.selecting;
+  const pick = state.picks[team];
+
+  setTurn(team);
+
+  const list = $('qlist');
+  list.innerHTML = '';
+  pick.deck.forEach(q => {
+    const row = document.createElement('div');
+    row.className = 'q-row';
+    row.dataset.uid = String(q.uid);
+
+    const main = document.createElement('div');
+    main.className = 'row-main';
+    const cat = document.createElement('div');
+    cat.className = 'cat';
+    cat.textContent = q.category;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const diff = document.createElement('span');
+    diff.className = 'diff diff-' + q.difficulty;
+    diff.textContent = DIFF_LABEL[q.difficulty];
+    meta.appendChild(diff);
+    main.appendChild(cat); main.appendChild(meta);
+
+    const box = document.createElement('div');
+    box.className = 'pt-box diff-' + q.difficulty;
+    box.innerHTML = ptsInner(q.points);
+
+    const status = document.createElement('div');
+    status.className = 'status';
+
+    row.appendChild(box); row.appendChild(main); row.appendChild(status);
+    row.addEventListener('click', () => toggleChoice(q.uid));
+    list.appendChild(row);
+  });
+  refreshSelection();
+}
+
+function toggleChoice(uid){
+  const chosen = state.picks[state.selecting].chosen;
+  if (chosen.has(uid)) chosen.delete(uid);
+  else if (chosen.size < KEEP_COUNT) chosen.add(uid);
+  refreshSelection();
+}
+
+function refreshSelection(){
+  const chosen = state.picks[state.selecting].chosen;
+  document.querySelectorAll('#qlist .q-row').forEach(row => {
+    const on = chosen.has(Number(row.dataset.uid));
+    row.classList.toggle('kept', on);
+    row.querySelector('.status').textContent = on ? '\u2713' : '';
+  });
+  $('selInfo').innerHTML = '<span>Ronda ' + state.roundNum + '</span>' +
+    '<span class="count">Elegidas <b>' + chosen.size + '</b> de ' + KEEP_COUNT + '</span>';
+  $('btnConfirmSelection').disabled = chosen.size !== KEEP_COUNT;
+}
+
+function confirmSelection(){
+  if (state.selecting === state.starter){
+    beginSelectionFor(rivalOf(state.starter));   // le toca al otro equipo, con sus 10 nuevas
+  } else {
+    startPlay();
+  }
+}
+
+/* ====== FASE DE JUEGO (10 preguntas compartidas, turnos alternos) ====== */
+function buildPool(){
+  const wrap = q => ({question:q, answered:false});
+  const items = [];
+  ['A','B'].forEach(t => {
+    const pick = state.picks[t];
+    pick.deck.forEach(q => state.usedIds.add(q.uid));
+    pick.deck.filter(q => pick.chosen.has(q.uid)).forEach(q => items.push(wrap(q)));
+  });
+  state.pool = items.sort(() => Math.random() - 0.5);
+  // Precarga las imágenes para que salgan al instante al elegir la pregunta
+  state.pool.forEach(it => imageFor(it.question).then(u => { if (u){ const im = new Image(); im.src = u; imgLooksTransparent(u); } }));
+}
+function poolPending(){ return state.pool.filter(it => !it.answered); }
+
+function startPlay(){
+  buildPool();
+  state.activeTeam = state.starter;
+  state.currentItem = null;
+  showTurnOverlay(state.activeTeam, '¡A jugar! Tu turno', () => {
+    showScreen('screen-play');
+    renderBoard();
+  });
+}
+
+
+/* ====== TEXTO QUE SE ESCRIBE POCO A POCO ======
+   El texto completo se coloca desde el principio (invisible) para que el espacio
+   ya esté reservado y nada se mueva; solo se va "encendiendo" letra a letra. */
+let twRun = 0;
+const REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function twPrepare(el, text){
+  el.innerHTML = '<span class="tw-on"></span><span class="tw-off"></span>';
+  el.querySelector('.tw-off').textContent = text || '\u00a0';
+}
+function twType(el, text, perChar, run){
+  return new Promise(res => {
+    const on = el.querySelector('.tw-on'), off = el.querySelector('.tw-off');
+    if (!on || !off) { res(); return; }
+    if (REDUCE_MOTION || !text) { on.textContent = text; off.textContent = ''; res(); return; }
+    let i = 0;
+    (function step(){
+      if (run !== twRun) { res(); return; }
+      i++;
+      on.textContent = text.slice(0, i);
+      off.textContent = text.slice(i);
+      if (i >= text.length) res(); else setTimeout(step, perChar);
+    })();
+  });
+}
+
+const OPTION_LABELS = ['A','B','C','D','E','F','G','H'];
+
+function renderBoard(){
+  const pending = poolPending();
+  setTurn(state.activeTeam);
+  $('playBoardInfo').style.display = '';
+  $('playBoardInfo').innerHTML = '<span>Ronda ' + state.roundNum + '</span><span class="count"><b>' + pending.length + '</b> de ' + state.pool.length + '</span>';
+  $('playCard').style.display = 'none';
+
+  const grid = $('boardGrid');
+  grid.style.display = '';
+  grid.innerHTML = '';
+  state.pool.forEach(item => {
+    const q = item.question;
+    const card = document.createElement('div');
+    const top =
+      '<div class="bi-top">' +
+        '<div class="cat">' + esc(q.category) + '</div>' +
+        '<div class="meta">' +
+          '<span class="diff diff-' + q.difficulty + '">' + DIFF_LABEL[q.difficulty] + '</span>' +
+          '<span class="pt-box sm diff-' + q.difficulty + '">' + ptsInner(q.points) + '</span>' +
+        '</div>' +
+      '</div>';
+    if (item.answered){
+      card.className = 'board-item done';
+      card.setAttribute('aria-disabled', 'true');
+      card.innerHTML = top;
+    } else {
+      card.className = 'board-item active-turn';
+      card.innerHTML = top;
+      card.addEventListener('click', () => selectBoardQuestion(item));
+    }
+    grid.appendChild(card);
+  });
+}
+
+function selectBoardQuestion(item){
+  const q = item.question;
+  state.currentItem = item;
+
+  $('playDiff').textContent = DIFF_LABEL[q.difficulty];
+  $('playDiff').className = 'diff-chip diff-' + q.difficulty;
+  $('playPts').innerHTML = ptsInner(q.points);
+  $('playPts').className = 'pt-box lg diff-' + q.difficulty;
+  $('playCategory').textContent = q.category;
+  $('playText').textContent = q.text;
+
+  const imgBox = $('playImage'), img = $('playImg');
+  imgBox.style.display = 'none';
+  img.removeAttribute('src');
+  img.classList.remove('img-transp');
+  img.alt = q.category;
+  imageFor(q).then(url => {
+    if (!url || state.currentItem !== item) return;
+    img.onload = () => { imgBox.style.display = 'block'; };
+    img.onerror = () => { imgBox.style.display = 'none'; };
+    fitImage(img, url);
+    img.src = url;
+  });
+  twRun++;
+  const fbEl = $('playFeedback'), infoEl = $('playInfo');
+  fbEl.className = 'feedback';
+  twPrepare(fbEl, 'Incorrecto');          // reserva la altura de la línea
+  if (q.info){
+    infoEl.style.display = 'block';
+    twPrepare(infoEl, q.info);            // reserva el alto exacto del texto
+  } else {
+    infoEl.style.display = 'none';
+    infoEl.innerHTML = '';
+  }
+  $('btnContinue').textContent = '\u00a0';
+  $('btnContinue').style.visibility = 'hidden';
+
+  const optsWrap = $('playOptions');
+  optsWrap.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = '<span class="opt-label">' + OPTION_LABELS[i] + '</span><span class="opt-text">' + opt + '</span>';
+    btn.addEventListener('click', () => answerBoardQuestion(i));
+    optsWrap.appendChild(btn);
+  });
+
+  $('boardGrid').style.display = 'none';
+  $('playBoardInfo').style.display = 'none';
+  $('playCard').style.display = 'flex';
+}
+
+function answerBoardQuestion(optIdx){
+  const team = state.activeTeam;
+  const item = state.currentItem;
+  if (!item || item.answered) return;
+  const q = item.question;
+  const correct = optIdx === q.correctAnswerIndex;
+
+  document.querySelectorAll('#playOptions .opt-btn').forEach((b,i)=>{
+    b.disabled = true;
+    if (i === q.correctAnswerIndex) b.classList.add('correct');
+    else if (i === optIdx && !correct) b.classList.add('incorrect');
+  });
+
+  item.answered = true;
+  item.by = team;
+  item.correct = correct;
+  if (correct){
+    if (team === 'A') state.scoreA += q.points; else state.scoreB += q.points;
+  }
+  state.resultsLog.push({ category: q.category, difficulty: q.difficulty, points: q.points, owner: team, correct });
+
+  const fb = $('playFeedback');
+  fb.className = 'feedback ' + (correct ? 'ok' : 'bad');
+  const fbText = correct ? 'Correcto' : 'Incorrecto';
+  twPrepare(fb, fbText);
+  const run = ++twRun;
+  twType(fb, fbText, 45, run).then(() => {
+    if (q.info && run === twRun) twType($('playInfo'), q.info, Math.max(8, Math.min(24, 2400 / q.info.length)), run);
+  });
+
+  updateScoreboard();
+  if (correct){
+    // El marcador muestra el valor anterior hasta que los puntos "llegan" volando
+    const scoreEl = team === 'A' ? $('sbScoreA') : $('sbScoreB');
+    const newScore = team === 'A' ? state.scoreA : state.scoreB;
+    scoreEl.textContent = newScore - q.points;
+    flyPointsToScore(team, q, () => {
+      scoreEl.textContent = newScore;
+      animateScoreGain(team, q.points);
+    });
+  }
+
+  const left = poolPending().length;
+  $('btnContinue').textContent = left ? 'Turno de ' + teamName(rivalOf(team)) : 'Ver resultado de la ronda';
+  $('btnContinue').style.visibility = 'visible';
+}
+
+function continueAfterAnswer(){
+  twRun++;
+  if (poolPending().length === 0){ finishRound(); return; }
+  state.activeTeam = rivalOf(state.activeTeam);
+  state.currentItem = null;
+  showTurnOverlay(state.activeTeam, 'Tu turno', () => renderBoard());
+}
+
+/* ====== ANIMACIÓN DE PUNTOS ====== */
+// El cuadrado de puntos de la pregunta "vuela" hasta el marcador del equipo y se suma allí.
+async function flyPointsToScore(team, q, onArrive){
+  const src = $('playPts');
+  const dst = team === 'A' ? $('sbScoreA') : $('sbScoreB');
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !src.animate){ onArrive(); return; }
+
+  // Si el marcador no está a la vista, lo acercamos antes de lanzar los puntos
+  let d = dst.getBoundingClientRect();
+  if (d.top < 0 || d.bottom > window.innerHeight){
+    dst.scrollIntoView({behavior:'smooth', block:'center'});
+    await new Promise(r => setTimeout(r, 450));
+    d = dst.getBoundingClientRect();
+  }
+  const r = src.getBoundingClientRect();
+
+  const fly = document.createElement('div');
+  fly.className = 'pt-box lg fly-pt diff-' + q.difficulty;
+  fly.innerHTML = ptsInner(q.points);
+  fly.style.left = r.left + 'px';
+  fly.style.top = r.top + 'px';
+  fly.style.width = r.width + 'px';
+  fly.style.height = r.height + 'px';
+  document.body.appendChild(fly);
+  src.style.visibility = 'hidden';
+
+  const dx = (d.left + d.width/2) - (r.left + r.width/2);
+  const dy = (d.top + d.height/2) - (r.top + r.height/2);
+  const anim = fly.animate([
+    { transform:'translate(0,0) scale(1)', opacity:1 },
+    { transform:'translate(' + (dx*.12) + 'px,' + (dy*.12 - 26) + 'px) scale(1.2)', opacity:1, offset:.22 },
+    { transform:'translate(' + dx + 'px,' + dy + 'px) scale(.35)', opacity:.9 }
+  ], { duration:900, easing:'cubic-bezier(.5,0,.75,.4)', fill:'forwards' });
+  anim.onfinish = () => {
+    fly.remove();
+    src.style.visibility = '';
+    onArrive();
+  };
+}
+
+function animateScoreGain(team, points){
+  const scoreEl = team === 'A' ? $('sbScoreA') : $('sbScoreB');
+  const boxEl = scoreEl.parentElement;
+
+  scoreEl.classList.remove('score-pop');
+  void scoreEl.offsetWidth; // reinicia la animación aunque se repita seguido
+  scoreEl.classList.add('score-pop');
+
+  const floatEl = document.createElement('div');
+  floatEl.className = 'score-float';
+  floatEl.textContent = '+' + points;
+  floatEl.style.top = '0';
+  floatEl.style.left = '0';
+  floatEl.style.right = '0';
+  floatEl.style.textAlign = team === 'A' ? 'left' : 'right';
+  boxEl.appendChild(floatEl);
+  setTimeout(() => floatEl.remove(), 900);
+}
+
+/* ====== RESULTADOS ====== */
+function finishRound(){
+  let winner = null;
+  if (state.scoreA > state.scoreB){ state.roundsWonA++; winner = 'A'; }
+  else if (state.scoreB > state.scoreA){ state.roundsWonB++; winner = 'B'; }
+
+  showScreen('screen-round-result');
+  window.scrollTo(0, 0);
+  state.starter = rivalOf(state.starter); // alterna quién selecciona primero la próxima ronda
+  playRoundSummary(winner);
+}
+
+/* Resumen animado: cada respuesta aparece en orden, el marcador va subiendo y al final se revela al ganador */
+let rrRun = 0, rrSkip = false, rrWake = null;
+function rrWait(ms){
+  return new Promise(res => {
+    if (rrSkip){ res(); return; }
+    const t = setTimeout(() => { rrWake = null; res(); }, ms);
+    rrWake = () => { clearTimeout(t); rrWake = null; res(); };
+  });
+}
+function skipRoundSummary(){ rrSkip = true; if (rrWake) rrWake(); }
+
+function buildRRRow(r, a, b, animate){
+  const row = document.createElement('div');
+  row.className = 'rr-row ' + (r.correct ? 'ok' : 'bad') + ' side-' + r.owner.toLowerCase() + (animate ? ' enter' : '');
+
+  const av = document.createElement('span');
+  av.className = 'rr-av ' + r.owner.toLowerCase();
+  setAvatar(av, teamAvatar(r.owner));
+
+  const mid = document.createElement('div');
+  mid.className = 'rr-mid';
+  const nm = document.createElement('b'); nm.textContent = teamName(r.owner);
+  const ct = document.createElement('span'); ct.textContent = r.category;
+  mid.appendChild(nm); mid.appendChild(ct);
+
+  const out = document.createElement('div');
+  out.className = 'rr-out';
+  const chip = document.createElement('span');
+  chip.className = 'rr-chip';
+  chip.textContent = r.correct ? '+' + r.points + (r.points === 1 ? ' pt' : ' pts') : 'Falló';
+  const run = document.createElement('span');
+  run.className = 'rr-run';
+  run.innerHTML = '<i class="a">' + a + '</i><i class="sep">-</i><i class="b">' + b + '</i>';
+  out.appendChild(chip); out.appendChild(run);
+
+  row.appendChild(av); row.appendChild(mid); row.appendChild(out);
+  return row;
+}
+
+async function playRoundSummary(winner){
+  const run = ++rrRun;
+  rrSkip = false; rrWake = null;
+  const list = $('roundResultList');
+  list.innerHTML = '';
+  $('rrRound').textContent = 'Ronda ' + state.roundNum;
+  $('rrWinner').style.display = 'none';
+  $('btnNextRound').style.display = 'none';
+  $('btnSkip').style.display = '';
+  $('sbScoreA').textContent = '0';
+  $('sbScoreB').textContent = '0';
+
+  let a = 0, b = 0;
+  await rrWait(700);
+  for (const r of state.resultsLog){
+    if (run !== rrRun) return;
+    if (r.correct){ if (r.owner === 'A') a += r.points; else b += r.points; }
+    const row = buildRRRow(r, a, b, !rrSkip);
+    list.appendChild(row);
+    $('sbScoreA').textContent = a;
+    $('sbScoreB').textContent = b;
+    if (r.correct && !rrSkip) animateScoreGain(r.owner, r.points);
+    list.scrollTop = list.scrollHeight;
+    await rrWait(1000);
+  }
+  if (run !== rrRun) return;
+  await rrWait(400);
+  if (run !== rrRun) return;
+
+  // Revelación del ganador
+  $('btnSkip').style.display = 'none';
+  const w = $('rrWinner');
+  const av = $('rrWAvatar');
+  w.className = 'rr-winner' + (winner ? ' ' + winner.toLowerCase() : '');
+  if (winner){
+    av.style.display = '';
+    setAvatar(av, teamAvatar(winner));
+    $('roundResultTitle').textContent = teamName(winner) + ' gana la ronda';
+  } else {
+    av.style.display = 'none';
+    $('roundResultTitle').textContent = 'Ronda empatada';
+  }
+  $('roundResultScore').innerHTML =
+    '<span class="a">' + state.scoreA + '</span><span class="sep">-</span><span class="b">' + state.scoreB + '</span>';
+  w.style.display = 'none'; void w.offsetWidth; w.style.display = 'block';
+  updateScoreboard();   // aquí se rellena la casilla de la ronda ganada
+
+  const decided = state.roundsWonA >= ROUNDS_TO_WIN || state.roundsWonB >= ROUNDS_TO_WIN;
+  $('btnNextRound').textContent = decided ? 'Ver resultado final' : 'Siguiente ronda';
+  $('btnNextRound').style.display = 'block';
+}
+
+function goNextRoundOrEndMatch(){
+  if (state.roundsWonA >= ROUNDS_TO_WIN || state.roundsWonB >= ROUNDS_TO_WIN){
+    const winner = state.roundsWonA >= ROUNDS_TO_WIN ? 'A' : 'B';
+    $('matchResultTitle').textContent = '🏆 ¡' + teamName(winner) + ' gana la partida!';
+    $('matchResultScore').textContent = state.roundsWonA + ' — ' + state.roundsWonB + ' rondas';
+    showScreen('screen-match-result');
+  } else {
+    startRound();
+  }
+}
+
+function restartMatch(){
+  const a = state.teamA, b = state.teamB, av1 = state.avatarA, av2 = state.avatarB;
+  state = freshState(a, b, av1, av2);
+  $('scoreboard').style.display = 'none';
+  showScreen('screen-setup');
+}
+
+/* ====== EVENTOS ====== */
+const pickedAvatar = {A:null, B:null};   // se rellena al azar al cargar (assignRandomAvatars); mientras tanto se ve la letra
+
+function renderIconPickers(){
+  setAvatar($('badgeA'), pickedAvatar.A || 'letter:A');
+  setAvatar($('badgeB'), pickedAvatar.B || 'letter:B');
+}
+renderIconPickers();
+
+/* Avatar aleatorio por defecto: al cargar, cada equipo recibe una imagen al azar de entre
+   todas las disponibles (distinta para cada equipo). Si mientras tanto el jugador ya eligió
+   uno a mano, se respeta. */
+async function assignRandomAvatars(){
+  const lists = await Promise.all(AVATAR_PACKS.map(async p => ({ p, list: await detectPack(p) })));
+  const pool = [];
+  lists.forEach(({ p, list }) => list.forEach(n => pool.push(p.id + ':' + n)));
+  if (!pool.length) return;
+  const pickFrom = exclude => {
+    const opts = pool.filter(id => id !== exclude);
+    return opts.length ? opts[Math.floor(Math.random() * opts.length)] : null;
+  };
+  if (!pickedAvatar.A) pickedAvatar.A = pickFrom(pickedAvatar.B);
+  if (!pickedAvatar.B) pickedAvatar.B = pickFrom(pickedAvatar.A);
+  renderIconPickers();
+}
+assignRandomAvatars();
+
+/* Selector de avatares a pantalla completa, por filas (estilo Netflix) */
+const avModal = $('avModal');
+let avTeam = 'A', avPending = null;
+function markPending(){
+  $('avBody').querySelectorAll('.av-opt').forEach(x => x.classList.toggle('sel', x.dataset.id === avPending));
+  setAvatar($('avPreview'), avPending || ('letter:' + avTeam));
+  $('btnApplyAv').disabled = !avPending;
+}
+let avToken = 0;
+function fillAvatarRow(row, pack, list){
+  const other = pickedAvatar[rivalOf(avTeam)];
+  row.innerHTML = '';
+  for (const i of list){
+    const id = pack.id + ':' + i;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'av-opt';
+    b.dataset.id = id;
+    b.disabled = (id === other);
+    b.setAttribute('aria-label', pack.name + ' ' + i);
+    setAvatar(b, id);
+    b.addEventListener('click', () => { avPending = id; markPending(); });
+    row.appendChild(b);
+  }
+}
+function openAvatarPicker(team){
+  avTeam = team;
+  avPending = pickedAvatar[team];
+  $('avTitle').textContent = 'Avatar de ' + ($('inputTeam' + team).value.trim() || 'Equipo ' + team);
+  const body = $('avBody');
+  body.innerHTML = '';
+  const tok = ++avToken;
+  AVATAR_PACKS.forEach(pack => {
+    if (pack._list && pack._list.length === 0) return;   // pack sin imágenes: no se muestra
+    const sec = document.createElement('section');
+    sec.className = 'av-pack';
+    const h = document.createElement('h4');
+    h.textContent = pack.name;
+    const row = document.createElement('div');
+    row.className = 'av-row';
+    fillAvatarRow(row, pack, pack._list || Array.from({length: AVATAR_DEFAULT_COUNT}, (_, k) => k + 1));
+    sec.appendChild(h); sec.appendChild(row);
+    body.appendChild(sec);
+    if (!pack._list){
+      detectPack(pack).then(list => {
+        if (tok !== avToken) return;                 // el selector se cerró o se reabrió
+        if (list.length === 0){ sec.remove(); return; }
+        fillAvatarRow(row, pack, list);
+        markPending();
+      });
+    }
+  });
+  markPending();
+  body.scrollTop = 0;
+  avModal.classList.add('open');
+  const sel = body.querySelector('.av-opt.sel');
+  if (sel){ const row = sel.parentElement; row.scrollLeft = Math.max(0, sel.offsetLeft - row.clientWidth / 2 + sel.offsetWidth / 2); }
+}
+function closeAvatarPicker(){ avToken++; avModal.classList.remove('open'); }
+$('pickA').addEventListener('click', () => openAvatarPicker('A'));
+$('pickB').addEventListener('click', () => openAvatarPicker('B'));
+$('btnCancelAv').addEventListener('click', closeAvatarPicker);
+$('btnApplyAv').addEventListener('click', () => {
+  if (avPending) pickedAvatar[avTeam] = avPending;
+  renderIconPickers();
+  closeAvatarPicker();
+});
+
+// Si el logo no existe, se muestra el nombre del juego como texto
+$('gameLogo').onerror = function(){
+  const h = document.createElement('h1');
+  h.textContent = '100-R';
+  this.replaceWith(h);
+};
+
+const rulesModal = $('rulesModal');
+const rsPages = [...document.querySelectorAll('.rs-page')];
+let rulesPage = 0;
+rsPages.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.type = 'button'; d.className = 'rs-dot'; d.setAttribute('aria-label', 'Página ' + (i + 1));
+  d.addEventListener('click', () => showRulesPage(i));
+  $('rsDots').appendChild(d);
+});
+function showRulesPage(n){
+  rulesPage = Math.max(0, Math.min(rsPages.length - 1, n));
+  rsPages.forEach((p, i) => {
+    p.classList.toggle('active', i === rulesPage);
+    p.classList.toggle('before', i < rulesPage);
+  });
+  [...$('rsDots').children].forEach((d, i) => d.classList.toggle('on', i === rulesPage));
+  $('btnRulesPrev').style.visibility = rulesPage ? 'visible' : 'hidden';
+  $('btnRulesNext').textContent = rulesPage === rsPages.length - 1 ? 'Entendido' : 'Siguiente';
+}
+function fitRules(){
+  const sheet = document.querySelector('.rules-sheet'), box = $('rsPages');
+  sheet.style.setProperty('--rs', 1);
+  let k = 1;
+  const overflows = () => rsPages.some(p => p.scrollHeight > box.clientHeight + 1);
+  while (k > 0.7 && overflows()){ k = Math.round((k - 0.04) * 100) / 100; sheet.style.setProperty('--rs', k); }
+  box.classList.toggle('scroll', overflows());
+}
+window.addEventListener('resize', () => { if (rulesModal.classList.contains('open')) fitRules(); });
+function closeRules(){ rulesModal.classList.remove('open'); }
+$('btnRules').addEventListener('click', () => { showRulesPage(0); rulesModal.classList.add('open'); fitRules(); });
+$('btnRulesNext').addEventListener('click', () => { if (rulesPage === rsPages.length - 1) closeRules(); else showRulesPage(rulesPage + 1); });
+$('btnRulesPrev').addEventListener('click', () => showRulesPage(rulesPage - 1));
+$('btnCloseRulesX').addEventListener('click', closeRules);
+(() => { // deslizar con el dedo para cambiar de página
+  let x0 = null;
+  const box = $('rsPages');
+  box.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, {passive:true});
+  box.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 45) showRulesPage(rulesPage + (dx < 0 ? 1 : -1));
+  }, {passive:true});
+})();
+rulesModal.addEventListener('click', e => { if (e.target === rulesModal) closeRules(); });
+
+$('btnStart').addEventListener('click', () => {
+  const a = $('inputTeamA').value.trim() || 'Equipo A';
+  const b = $('inputTeamB').value.trim() || 'Equipo B';
+  state = freshState(a, b, pickedAvatar.A, pickedAvatar.B);
+  startRound();
+});
+$('btnConfirmSelection').addEventListener('click', confirmSelection);
+$('btnNextRound').addEventListener('click', goNextRoundOrEndMatch);
+$('btnSkip').addEventListener('click', skipRoundSummary);
+$('btnRestart').addEventListener('click', restartMatch);
+$('btnContinue').addEventListener('click', continueAfterAnswer);
+
+/* ====== ARRANQUE ====== */
+async function initApp(){
+  try {
+    await loadQuestions();
+    $('btnStart').disabled = false;
+    $('btnStart').textContent = 'Empezar partida';
+  } catch (err) {
+    $('screen-setup').innerHTML =
+      '<p style="color:#FF8B8B;text-align:center;">No se pudieron cargar las preguntas (' + err.message + ').<br>' +
+      'Si abriste index.html directamente con doble clic, algunos navegadores bloquean la carga ' +
+      'de archivos locales. Ejecuta un servidor local (ver README.md) y vuelve a intentarlo.</p>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+
+</script>
+</body>
+</html>
